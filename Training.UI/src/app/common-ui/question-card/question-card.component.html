@@ -1,0 +1,38 @@
+@if (question){
+    <div class="question-card">
+        <p class="question">{{question.question}} </p>
+            @if(!answerResult){
+                <div >
+                    <div class="answer-card">
+                    <input class="answer-input" 
+                    #answerInput 
+                    name="answer" [(ngModel)]="answer" 
+                    (ngModelChange)="onAnswerChange()" 
+                    (keyup.enter)="sendAnswer()"
+                    (blur)="setFocus()"
+                    autocomplete="off"
+                    autofocus/>
+                    <button (click)="sendAnswer()">Send</button>
+                    </div>
+                </div>
+                <form [formGroup]="questionForm">
+                <div class="angram-card" formArrayName="anagrams">
+                    @for (anagram of anagramsControl.controls; track $index) {
+                        <button class="btn" (click)="anagramClick(anagram.value)"  >
+                            <span class="high-light">{{splitName(anagram.value).start}}</span>{{splitName(anagram.value).end}}</button>
+                    }
+                </div>
+            
+            </form>
+            }
+            @else if(answerResult.exerciseStatus=="Success"){
+                <p class="correct-answer">{{answerResult.correctAnswer}}</p>
+                <p class="correct-answer">{{answerResult.exerciseStatus}}</p>
+            }
+            @else {
+                <p class="failure-answer">{{answer}}</p>
+                <p class="correct-answer">{{answerResult.correctAnswer}}</p>
+                <p class="failure-answer">{{answerResult.exerciseStatus}}</p>
+            }
+    </div>
+}

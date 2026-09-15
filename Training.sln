@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36518.9 d17.14
+VisualStudioVersion = 17.14.36518.9
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Training.API", "Training.API\Training.API.csproj", "{401D46B0-385D-4574-8473-8D2D2A02D347}"
 EndProject
@@ -10,6 +10,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Training.Application", "Training.Application\Training.Application.csproj", "{3FDCB4FB-2ED1-426F-81E6-E472FCC832C5}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Training.Persistence", "Training.Persistence\Training.Persistence.csproj", "{311DBF64-10E6-4878-866B-F7A1201D3E2B}"
+EndProject
+Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "Training.UI", "Training.UI\Training.UI.esproj", "{A5A715D3-9EF0-A0B8-6330-01A044CAB3DE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,12 @@ Global
 		{311DBF64-10E6-4878-866B-F7A1201D3E2B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{311DBF64-10E6-4878-866B-F7A1201D3E2B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{311DBF64-10E6-4878-866B-F7A1201D3E2B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A5A715D3-9EF0-A0B8-6330-01A044CAB3DE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A5A715D3-9EF0-A0B8-6330-01A044CAB3DE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A5A715D3-9EF0-A0B8-6330-01A044CAB3DE}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{A5A715D3-9EF0-A0B8-6330-01A044CAB3DE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A5A715D3-9EF0-A0B8-6330-01A044CAB3DE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A5A715D3-9EF0-A0B8-6330-01A044CAB3DE}.Release|Any CPU.Deploy.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -6,4 +6,16 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="10.1.7" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="10.1.7" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.1.7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Training.Application\Training.Application.csproj" />
+    <ProjectReference Include="..\Training.Domain\Training.Domain.csproj" />
+    <ProjectReference Include="..\Training.Persistence\Training.Persistence.csproj" />
+  </ItemGroup>
+
 </Project>

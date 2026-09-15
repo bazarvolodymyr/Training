@@ -1,0 +1,47 @@
+:host {
+    display: flex;
+    justify-content: center;
+    align-content: center;
+   
+}
+
+.question-card {
+    width: 800px;
+    padding: 20px 12px;
+    display: grid;
+    grid-template-rows: auto;
+    border: 1px solid black;
+}
+
+.answer-card {
+    display: grid;
+    grid-template-columns: 1fr 70px;
+}
+
+.question {
+    font-weight: bold;
+}
+
+.correct-answer {
+    color: green;
+}
+
+.failure-answer {
+    color: red;
+}
+.angram-card {
+    padding: 20px 12px;
+    display: grid;
+    grid-template-columns: repeat(3, 200px);
+    gap: 16px;
+    justify-content: center;
+    
+}
+.answer-input {
+width: 1fr;
+}
+
+.high-light {
+    text-decoration: none;
+    background: orange;
+}
