@@ -1,0 +1,39 @@
+---
+description: Правила бекенду — Domain, Application, Persistence, API
+globs: "**/*.cs"
+alwaysApply: false
+---
+
+# Бекенд
+Clean Architecture. 
+Залежності лише всередину: `API` → `Application` / `Persistence` → `Domain`. `Domain` не знає про інші шари.
+
+## Шари
+
+- `Training.Domain` — моделі, enum, інтерфейси `I{Name}Service` / `I{Name}Repository`. Без HTTP, EF, DI-контейнера.
+- `Training.Application` — бізнес-логіка в `Services/`, DTO в `Contracts/`, реєстрація в `AddApplication()`.
+- `Training.Persistence` — реалізація репозиторіїв. Без бізнес-правил. Реєстрація в `AddPersistence()`.
+- `Training.API` — тонкі контролери і `Program.cs`. Без репозиторіїв і Domain-моделей у відповідях.
+
+## Сервіси та репозиторії
+
+- DI: конструктор, `private readonly`, `AddScoped`
+- Сервіс мапить Domain → контракт; контролер працює лише з контрактами
+- Контракти — `record` у `Training.Application/Contracts`
+
+```csharp
+// ❌ BAD — сервіс віддає Domain-модель назовні
+public Exercise GetExercise() => _exerciseRepository.GetExercise(1);
+
+// ✅ GOOD — сервіс повертає контракт
+public GetQuestion GetExercise()
+{
+    var exercise = _exerciseRepository.GetExercise(1);
+    return new GetQuestion { Id = exercise.Id, Question = exercise.Question };
+}
+```
+
+## API
+
+- `[Route("[controller]/[action]")]`, `[ApiController]`, `IActionResult`
+- У `Program.cs` лише `AddApplication()` / `AddPersistence()`, CORS, Swagger

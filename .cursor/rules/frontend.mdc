@@ -1,0 +1,42 @@
+---
+description: Правила фронтенду — Angular у Training.UI
+globs: Training.UI/**/*.{ts,html,scss}
+alwaysApply: false
+---
+
+# Фронтенд
+
+Standalone Angular. Компонент показує стан; HTTP — у сервісі; типи — в інтерфейсах. UI не імпортує бекенд-проєкти.
+
+## Структура
+
+- Компоненти: `src/app/common-ui/{name}/{name}.component.ts|html|scss`
+- Сервіси: `src/app/data/services/`
+- Інтерфейси: `src/app/data/interfaces/`
+- Старт: `bootstrapApplication` + `appConfig` (`provideRouter`, `provideHttpClient`)
+
+## Сервіси
+
+- `@Injectable({ providedIn: 'root' })`, `inject(HttpClient)`
+- Шляхи як у API: `Exercise/GetQuestion`, `Exercise/QuestionResponse`
+- Типізуй `get<T>` / `post<T>` інтерфейсами з `data/interfaces`
+
+```typescript
+// ❌ BAD — HTTP у компоненті
+this.http.get('http://localhost:5166/Exercise/GetQuestion').subscribe(...)
+
+// ✅ GOOD
+this.questionService.getQuestion().subscribe(val => this.question = val)
+```
+
+## Компоненти та шаблони
+
+- `inject()` для сервісів і `FormBuilder`
+- Селектор: `app-{name}`
+- `@if` / `@for`, не `*ngIf` / `*ngFor`
+
+## Інтерфейси
+
+- camelCase, як у JSON API (`id`, `question`, `exerciseStatus`)
+- Один інтерфейс — один файл: `question.interface.ts`
+- Не оголошуй ті самі типи всередині компонента
