@@ -5,35 +5,47 @@ alwaysApply: false
 ---
 
 # Бекенд
-Clean Architecture. 
-Залежності лише всередину: `API` → `Application` / `Persistence` → `Domain`. `Domain` не знає про інші шари.
+
+Clean Architecture + логічний CQRS у Application.  
+Залежності всередину: `API` → `Application` / `Persistence` → `Domain`. `Domain` не знає інші шари.
 
 ## Шари
 
-- `Training.Domain` — моделі, enum, інтерфейси `I{Name}Service` / `I{Name}Repository`. Без HTTP, EF, DI-контейнера.
-- `Training.Application` — бізнес-логіка в `Services/`, DTO в `Contracts/`, реєстрація в `AddApplication()`.
-- `Training.Persistence` — реалізація репозиторіїв. Без бізнес-правил. Реєстрація в `AddPersistence()`.
-- `Training.API` — тонкі контролери і `Program.cs`. Без репозиторіїв і Domain-моделей у відповідях.
+- `Training.Domain` — моделі, enum. Без HTTP, EF, DTO, без `I{Name}Service` і без `I{Name}Repository` «на сутність».
+- `Training.Application` — MediatR Command/Query, `ITrainingDbContext`, record-контракти поруч із хендлером, `AddApplication()`.
+- `Training.Persistence` — `TrainingDbContext : ITrainingDbContext` (PostgreSQL). Без бізнес-правил. `AddPersistence()`.
+- `Training.API` — тонкі контролери: HTTP → `IMediator.Send`. Без DbContext і Domain-моделей у відповідях.
 
-## Сервіси та репозиторії
+## Доступ до даних
 
-- DI: конструктор, `private readonly`, `AddScoped`
-- Сервіс мапить Domain → контракт; контролер працює лише з контрактами
-- Контракти — `record` у `Training.Application/Contracts`
+- За замовчуванням хендлер працює з **`ITrainingDbContext`**, не з репозиторієм.
+- Не розмножувати generic `IRepository<T>` / `I{Name}Repository`.
+- Вузька абстракція **за змістом** (`IQuestionPicker`) — лише якщо запит повторюваний або важкий.
+- `IExerciseRepository` — борг прототипу; не копіювати цей підхід.
 
 ```csharp
-// ❌ BAD — сервіс віддає Domain-модель назовні
+// ❌ BAD — репозиторій заради репозиторію, Domain-модель назовні
 public Exercise GetExercise() => _exerciseRepository.GetExercise(1);
 
-// ✅ GOOD — сервіс повертає контракт
-public GetQuestion GetExercise()
+// ✅ GOOD — Query + ITrainingDbContext → контракт
+public async Task<GetQuestionResponse> Handle(GetQuestionQuery request, CancellationToken ct)
 {
-    var exercise = _exerciseRepository.GetExercise(1);
-    return new GetQuestion { Id = exercise.Id, Question = exercise.Question };
+    var exercise = await _db.Exercises.AsNoTracking()
+        .Where(e => e.Id == request.Id)
+        .Select(e => new GetQuestionResponse { Id = e.Id, Question = e.Question })
+        .FirstOrDefaultAsync(ct);
+    return exercise;
 }
 ```
 
+## CQRS + MediatR (одна БД)
+
+- Query — лише читання (`AsNoTracking` де можна). Канон відповіді в next-question не віддавати.
+- Command — зміна стану. `SubmitAttempt` і прогрес — **одна транзакція** (`SaveChangesAsync`).
+- Не додавати другу БД, event sourcing, eventual consistency для вікторини.
+- Шлях: `Features/{Feature}/Queries|Commands/{Name}/`
+
 ## API
 
-- `[Route("[controller]/[action]")]`, `[ApiController]`, `IActionResult`
-- У `Program.cs` лише `AddApplication()` / `AddPersistence()`, CORS, Swagger
+- Цільові маршрути: REST `/api/v1/...`. Контролер лише мапить статус-коди.
+- У `Program.cs`: `AddApplication()` / `AddPersistence()`, CORS, Swagger.

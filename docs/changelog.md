@@ -1,5 +1,36 @@
 # Журнал змін
 
+## [2026-10-06] - ITrainingDbContext замість шару репозиторіїв
+
+### Добавлено
+- У `Project.md` §5.1.2 — правило доступу до даних: контекст + хендлери
+- У `qa.md` — узгоджене G2
+- У `tasktracker.md` — завершена задача фіксації рішення
+
+### Змінено
+- Domain більше не планується як місце для `I{Name}Repository` на кожну сутність
+- Persistence реалізує `ITrainingDbContext`, не обов’язковий шар репозиторіїв
+- `.cursor/rules/backend.mdc` — приклад хендлера через `ITrainingDbContext`
+- Вузькі абстракції (`IQuestionPicker`) дозволені лише для важких/повторюваних запитів
+
+### Виправлено
+- Спадок прототипу (`IExerciseRepository`) більше не виглядає як цільовий стандарт
+
+## [2026-10-06] - Application: CQRS + MediatR, одна БД
+
+### Добавлено
+- У `Project.md` §5.1.1 — логічний CQRS (Command/Query), MediatR, структура `Features/`, одна PostgreSQL
+- У `tasktracker.md` — завершена задача документації та задача «Каркас CQRS+MediatR у Application»
+- У `qa.md` — узгоджене рішення G1
+
+### Змінено
+- Сценарії Application більше не плануються як `I{Name}Service` у Domain
+- `.cursor/rules/backend.mdc` — контролер → `IMediator.Send`, handlers замість сервісів
+- Submit attempt і прогрес лишаються в одній транзакції; окрема read-БД і event sourcing заборонені
+
+### Виправлено
+- Немає
+
 ## [2026-09-21] - Рішення з qa.md перенесено в проєктну документацію
 
 ### Добавлено

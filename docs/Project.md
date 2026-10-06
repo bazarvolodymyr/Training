@@ -23,7 +23,7 @@ SaaS для тренування іноземної мови (MVP-контент
 | Шар | Проєкт | Зараз |
 |---|---|---|
 | API | `Training.API` | ASP.NET Core 9, Swagger, CORS `AllowAll`, `ExerciseController`, маршрути `[controller]/[action]` |
-| Application | `Training.Application` | `ExerciseService`, контракти `GetQuestion`, `AnswerResponse`, `ExerciseResult` |
+| Application | `Training.Application` | `ExerciseService` + DTO (борг: перейти на CQRS+MediatR) |
 | Domain | `Training.Domain` | `Exercise`, `Lesson` (не в потоці), `ExerciseStatus` |
 | Persistence | `Training.Persistence` | In-memory заглушка, одне вшите завдання |
 | UI | `Training.UI` | Angular 19 standalone, `question-card`: гібрид поле + чіпи |
@@ -36,7 +36,7 @@ SaaS для тренування іноземної мови (MVP-контент
 
 **Борг відносно узгодженої цілі**
 
-- Немає PostgreSQL, REST `/api/v1`, BFF/OAuth, ролей і підписки, статей, медіа, трьох режимів з сервера, прогресу, адмінки, GDPR-видалення.
+- Немає PostgreSQL, REST `/api/v1`, CQRS+MediatR у Application, BFF/OAuth, ролей і підписки, статей, медіа, трьох режимів з сервера, прогресу, адмінки, GDPR-видалення.
 - Прототип UA→EN можна зберегти за змістом; контракт і `question-card` **дозволено ламати** на етапі 4.
 
 Локальні адреси: API `http://localhost:5166`, HTTPS `https://localhost:7014`. Базовий URL UI захардкоджений у `QuestionsService`.
@@ -97,7 +97,7 @@ SaaS для тренування іноземної мови (MVP-контент
 
 ## 5. Архітектурні рішення
 
-Рішення з `qa.md` (2026-09-21). Зміна пункту = оновлення цього розділу + запис в історії документа.
+Рішення з `qa.md` (2026-09-21) і CQRS+MediatR (2026-10-06). Зміна пункту = оновлення цього розділу + запис в історії документа.
 
 | Тема | Рішення |
 |---|---|
@@ -113,6 +113,8 @@ SaaS для тренування іноземної мови (MVP-контент
 | Premium | Повний пул вправ; сутність підписки (`ExpiresAt`). У MVP видає Admin на email. Білінг — після MVP |
 | Аналітика | DAU/WAU, реєстрації, % успіху по вправі/уроку, лічильники Standard і активних Premium. Без воронки та time-on-answer |
 | API | REST `/api/v1` |
+| Application | **CQRS + MediatR**, одна PostgreSQL. Окремі Command/Query, без другої БД і без event sourcing |
+| Доступ до даних | **`ITrainingDbContext` + хендлери**. Generic `I{Name}Repository` не розмножуємо. Вузький доступ (напр. `IQuestionPicker`) — лише якщо запит повторюваний або важкий |
 | Адмінка | `/admin` у тому ж Angular, окремий SPA не потрібен |
 | Процес | Підтвердження **кожної задачі**, не етапу цілком |
 
@@ -124,14 +126,46 @@ Clean Architecture. Нові проєкти не додаємо, доки шар
 
 ```
 Training.API            HTTP REST, BFF-cookie, CORS+CSRF, rate limit, health, OAuth callback
-Training.Application    сценарії, контракти, політики доступу, перевірка відповіді, підбір питань
-Training.Domain         моделі, enum, інтерфейси
-Training.Persistence    EF Core + PostgreSQL, Identity, репозиторії
+Training.Application    CQRS (Commands/Queries) + MediatR, ITrainingDbContext, контракти, політики
+Training.Domain         моделі, enum (без DTO, без I*Service і без I*Repository «на кожну сутність»)
+Training.Persistence    TrainingDbContext : ITrainingDbContext, EF Core + PostgreSQL, Identity
 Training.UI             Angular 19 standalone (учень + /admin)
 docker-compose          PostgreSQL для dev
 ```
 
 Залежності: `API` → `Application` / `Persistence` → `Domain`.
+
+### 5.1.1 Application: CQRS + MediatR (одна БД)
+
+Логічний CQRS у `Training.Application`. Фізичний CQRS (окрема read-БД, черга подій, eventual consistency) **не робимо**.
+
+- **Query** — читання без зміни стану. Не віддає канонічну відповідь (`GetNextQuestion`, каталог уроків, прогрес, аналітика).
+- **Command** — зміна стану. `SubmitAttempt` у **одній транзакції** пише спробу й оновлює прогрес рівня (інакше безперервна вікторина й GDPR-erase ламаються).
+- **MediatR** — `IRequest` / `IRequestHandler`, `IMediator.Send` з тонкого контролера. Pipeline: валідація, logging. Нових `I{Name}Service` у Domain не додаємо; поточний `IExerciseService` замінюємо handlers.
+- **Один** `TrainingDbContext` (PostgreSQL) за інтерфейсом `ITrainingDbContext`. Query: `AsNoTracking` де можливо. Аналітика пізніше — таблиця snapshot у тій самій БД, не окремий store.
+- Структура за фічами, не плоский `Services/`:
+
+```
+Training.Application/Features/{Feature}/
+  Queries/{Name}/{Name}Query.cs
+  Queries/{Name}/{Name}QueryHandler.cs
+  Queries/{Name}/{Name}Response.cs
+  Commands/{Name}/{Name}Command.cs
+  Commands/{Name}/{Name}CommandHandler.cs
+```
+
+Приклади фіч: `Lessons`, `Quiz`, `Progress`, `Auth`, `Admin`, `Analytics`, `Privacy`.  
+Контролер не містить бізнес-логіки: мапить HTTP → request, request → `IActionResult`.
+
+### 5.1.2 Доступ до даних: `ITrainingDbContext`, не шар репозиторіїв
+
+EF Core уже є Unit of Work і змінює кілька сутностей в одній транзакції. Другий шар `IRepository<T>` поверх `DbSet<T>` для цього продукту не потрібен.
+
+- Хендлер залежить від **`ITrainingDbContext`** (у Application). `TrainingDbContext` у Persistence **реалізує** цей інтерфейс. Application може посилатися на EF Core заради `DbSet` / `AsNoTracking` — прийнятий компроміс.
+- Domain містить лише моделі та enum. **Не** додавати `I{Name}Repository` як правило. Поточний `IExerciseRepository` — борг прототипу (in-memory), прибрати після підключення EF.
+- Generic CRUD-репозиторій заборонений як стандарт.
+- Вузька абстракція **за змістом, не `*Repository`** (`IQuestionPicker`, `IProgressReader`) — лише якщо той самий важкий запит потрібен двом хендлерам або LINQ у хендлері стає нечитабельним. Кандидат: weighted random + ліміт 10 без канону.
+- Звичайні сценарії (стаття, submit + прогрес, адмін CRUD, GDPR erase, аналітика) — LINQ у хендлері через `ITrainingDbContext` і один `SaveChangesAsync`.
 
 ### 5.2 Доменна модель (цільова)
 
@@ -179,7 +213,7 @@ Manager бачить **усі** уроки. Ліміт Standard — кількі
 | Analytics | `GET /api/v1/analytics/overview` | Manager (без ПІБ) / Admin |
 | Health | `/health/live`, `/health/ready` | інфра |
 
-Контракти — `record` у `Training.Application/Contracts`. Без Domain-сутностей у відповідях.
+Контракти — `record` поруч із Query/Command фічі (за потреби спільні типи в `Training.Application/Contracts`). Без Domain-сутностей у відповідях. Контролер викликає `IMediator.Send`, не Application-сервіс.
 
 ### 5.5 UI
 
@@ -197,8 +231,8 @@ Manager бачить **усі** уроки. Ліміт Standard — кількі
 2. Відповідь клієнта: текст (і `difficulty`). Не «id правильних чіпів».
 3. Нормалізація: trim, стиснення пробілів, **видалення пунктуації**; апостроф у скороченнях зберігається. Порівняння з каноном **і синонімами**. Канонічний рядок зберігає регістр для показу.
 4. Легкий/середній: токени можуть бути словосполученнями; дистрактори — 3 на токен від Manager, віддаються перемішаними.
-5. Пишемо `QuizAttempt`, перераховуємо % з останніх 100 спроб цього користувача / уроку / рівня.
-6. У відповіді: статус, канон **після** спроби, **diff** якщо помилка. Канон ніколи не віддаємо в GET next.
+5. Command `SubmitAttempt` пише `QuizAttempt` і в тій же транзакції перераховує % з останніх 100 спроб цього користувача / уроку / рівня. Аналітичний snapshot у цьому запиті не рахуємо.
+6. У відповіді command: статус, канон **після** спроби, **diff** якщо помилка. Query `GetNextQuestion` канон ніколи не віддає.
 
 Анонім: лише зафіксована демо-вікторина. Мердж демо-спроб після реєстрації — ще не узгоджено (B4).
 
@@ -209,19 +243,20 @@ Manager бачить **усі** уроки. Ліміт Standard — кількі
 | Шар | Стек | Стандарт |
 |---|---|---|
 | Backend | .NET 9, ASP.NET Core | nullable, тонкі контролери, REST `/api/v1` |
-| Дані | EF Core + **PostgreSQL**, міграції | Fluent API, індекси в конфігураціях |
+| Application | **MediatR** + логічний CQRS | Command/Query handlers; одна БД; без event sourcing |
+| Дані | EF Core + **PostgreSQL**, міграції | `ITrainingDbContext` + один `TrainingDbContext`; Fluent API, індекси |
 | Dev infra | Docker Compose (PostgreSQL) | рядок підключення в secrets |
 | Identity | ASP.NET Core Identity + OAuth + BFF cookie | ролі + policies + `Subscription` |
 | API docs | Swagger | Development / внутрішній контур |
 | Frontend | Angular 19, RxJS 7, TypeScript 5.7 | standalone; UI укр.; без i18n у етапі 3 |
 | Статті | WYSIWYG (адмінка) + sanitize на UI | HTML, не Markdown |
-| Стиль C# | `.cursor/rules/backend.mdc` | `I{Name}Service`, `AddScoped`, record-контракти |
+| Стиль C# | `.cursor/rules/backend.mdc` | MediatR handlers + `ITrainingDbContext`; без generic-репозиторіїв |
 | Стиль UI | `.cursor/rules/frontend.mdc` | HTTP у сервісах, типи в `data/` |
 | Процес | `.cursor/rules/general.mdc` | документація → підтвердження **задачі** → код |
 | Час | UTC у БД | |
 | JSON | camelCase, enum рядком | |
 
-Планові пакети (не ставити до підтвердження задачі): `Npgsql.EntityFrameworkCore.PostgreSQL`, Identity, auth cookie/BFF, OAuth providers, rate limiting.
+Планові пакети (не ставити до підтвердження задачі): `MediatR`, `Npgsql.EntityFrameworkCore.PostgreSQL`, Identity, auth cookie/BFF, OAuth providers, rate limiting.
 
 Хостинг і blob — після C2/C4.
 
@@ -234,7 +269,7 @@ Manager бачить **усі** уроки. Ліміт Standard — кількі
 | Етап | Назва | Результат |
 |---|---|---|
 | 0 | Документація | Вимоги та рішення зафіксовані |
-| 1 | Фундамент даних | PostgreSQL (Docker), EF Core, `Lesson`/`Exercise` у БД |
+| 1 | Фундамент даних | PostgreSQL (Docker), EF Core, каркас CQRS+MediatR, `Lesson`/`Exercise` у БД |
 | 2 | Безпека доступу | BFF + OAuth, ролі, підписка, CORS/CSRF, GDPR erase |
 | 3 | Контент учня | Публічний каталог і стаття (HTML + медіа) |
 | 4 | Рушій вікторини | REST, 3 режими, гібрид/клавіатура, weighted random, ліміт 10, демо, diff |
@@ -253,8 +288,8 @@ Manager бачить **усі** уроки. Ліміт Standard — кількі
 2. Не перейменовувати проєкти, namespace і папки шарів.
 3. Мінімальний диф; підтверджуємо **задачу**, не весь етап.
 4. Нові API — REST `/api/v1`; UI-контракти в тому ж кроці.
-5. `AddScoped` у `AddApplication()` / `AddPersistence()`.
-6. Банк слів і перевірка — лише сервер; клієнтські `anagrams` — борг до етапу 4.
+5. `AddApplication()` реєструє MediatR. `AddPersistence()` реєструє `ITrainingDbContext` → `TrainingDbContext` (`AddScoped`). Нові сценарії — Command/Query через контекст, не `I{Name}Service` і не `I{Name}Repository` у Domain.
+6. Банк слів і перевірка — лише сервер (command); клієнтські `anagrams` — борг до етапу 4.
 7. Документація українською, ідентифікатори коду англійською; UI — українською.
 8. Не стартувати задачу, що залежить від ще відкритого питання в `qa.md`.
 9. Інциденти: `Correlation-Id`, health, `IsPublished` без деплою. Видалення акаунта не чіпає чужі уроки.
@@ -269,7 +304,7 @@ Manager бачить **усі** уроки. Ліміт Standard — кількі
 - Прогрес: % з останніх 100, окремо по рівнях.
 - Manager редагує всі уроки (WYSIWYG + медіа + дистрактори). Admin видає Premium на email і не може зняти останнього Admin.
 - Аналітика без ПІБ для Manager; GDPR-видалення персональних даних.
-- REST `/api/v1`, PostgreSQL, без правильної відповіді в GET next.
+- REST `/api/v1`, PostgreSQL, CQRS+MediatR і `ITrainingDbContext` (одна БД, без шару репозиторіїв), без правильної відповіді в GET next.
 - Документація синхронна з кодом.
 
 ---
@@ -288,3 +323,5 @@ Manager бачить **усі** уроки. Ліміт Standard — кількі
 |---|---|
 | 2026-09-18 | Перша версія: рамка SaaS і 8 вимог |
 | 2026-09-21 | Перенесено відповіді з `qa.md`: UA→EN, мово-агностична модель, PostgreSQL/Docker, BFF+OAuth, WYSIWYG+медіа, REST, підписка, ліміт 10, прогрес по 100 і рівнях, weighted random, GDPR, `/admin` |
+| 2026-10-06 | Application: логічний CQRS + MediatR, одна PostgreSQL; без окремої read-БД і event sourcing |
+| 2026-10-06 | Доступ до даних: `ITrainingDbContext` + хендлери; `I{Name}Repository` не є правилом, лише вузькі абстракції за змістом |
