@@ -1,6 +1,4 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Training.Application.Services;
-using Training.Domain.Interfaces.Services;
 
 namespace Training.Application
 {
@@ -8,7 +6,7 @@ namespace Training.Application
     {
         public static IServiceCollection AddApplication(this IServiceCollection services)
         {
-            services.AddScoped<IExerciseService, ExerciseService>();
+            services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(ApplicationExtension).Assembly));
 
             return services;
         }

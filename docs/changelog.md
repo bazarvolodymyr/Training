@@ -1,5 +1,18 @@
 # Журнал змін
 
+## [2026-10-06] - Каркас CQRS+MediatR у Application
+
+### Добавлено
+- Пакет MediatR 14.2.0 у `Training.Application` і `Training.API`
+- `Features/Quiz/Queries/GetQuestion` і `Features/Quiz/Commands/CheckAnswer`
+- Реєстрація handlers у `AddApplication()`
+
+### Змінено
+- `ExerciseController` викликає `IMediator.Send` (маршрути `Exercise/GetQuestion` і `QuestionResponse` без змін)
+
+### Виправлено
+- Прибрано `IExerciseService` / `ExerciseService` і подвійний виклик `GetExercise()` у GET
+
 ## [2026-10-06] - ITrainingDbContext замість шару репозиторіїв
 
 ### Добавлено

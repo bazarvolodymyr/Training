@@ -23,7 +23,7 @@ SaaS для тренування іноземної мови (MVP-контент
 | Шар | Проєкт | Зараз |
 |---|---|---|
 | API | `Training.API` | ASP.NET Core 9, Swagger, CORS `AllowAll`, `ExerciseController`, маршрути `[controller]/[action]` |
-| Application | `Training.Application` | `ExerciseService` + DTO (борг: перейти на CQRS+MediatR) |
+| Application | `Training.Application` | MediatR, `Features/Quiz` (`GetQuestionQuery`, `CheckAnswerCommand`), DTO в `Contracts/` |
 | Domain | `Training.Domain` | `Exercise`, `Lesson` (не в потоці), `ExerciseStatus` |
 | Persistence | `Training.Persistence` | In-memory заглушка, одне вшите завдання |
 | UI | `Training.UI` | Angular 19 standalone, `question-card`: гібрид поле + чіпи |
@@ -141,7 +141,7 @@ docker-compose          PostgreSQL для dev
 
 - **Query** — читання без зміни стану. Не віддає канонічну відповідь (`GetNextQuestion`, каталог уроків, прогрес, аналітика).
 - **Command** — зміна стану. `SubmitAttempt` у **одній транзакції** пише спробу й оновлює прогрес рівня (інакше безперервна вікторина й GDPR-erase ламаються).
-- **MediatR** — `IRequest` / `IRequestHandler`, `IMediator.Send` з тонкого контролера. Pipeline: валідація, logging. Нових `I{Name}Service` у Domain не додаємо; поточний `IExerciseService` замінюємо handlers.
+- **MediatR** — `IRequest` / `IRequestHandler`, `IMediator.Send` з тонкого контролера. Pipeline: валідація, logging. Нових `I{Name}Service` у Domain не додаємо. Прототип уже на `GetQuestionQuery` / `CheckAnswerCommand` (ще через `IExerciseRepository`, до появи `ITrainingDbContext`).
 - **Один** `TrainingDbContext` (PostgreSQL) за інтерфейсом `ITrainingDbContext`. Query: `AsNoTracking` де можливо. Аналітика пізніше — таблиця snapshot у тій самій БД, не окремий store.
 - Структура за фічами, не плоский `Services/`:
 

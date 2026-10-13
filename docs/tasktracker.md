@@ -59,14 +59,14 @@
 ## Етап 1. Фундамент даних
 
 ## Задача: Каркас CQRS+MediatR у Application
-- **Статус**: Не почата
+- **Статус**: Завершена
 - **Пріоритет**: Критичний
 - **Опис**: Підключити MediatR, папки Features/Commands/Queries. Замінити `IExerciseService` на Query `GetQuestion` і Command `CheckAnswer` (прототип). Нових репозиторіїв не додавати.
 - **Кроки виконання**:
-  - [ ] Пакет MediatR, реєстрація в `AddApplication()`
-  - [ ] Хендлери замість `ExerciseService` / `IExerciseService`
-  - [ ] Контролер через `IMediator.Send`
-  - [ ] Прибрати інтерфейс сценарію з namespace Domain
+  - [x] Пакет MediatR, реєстрація в `AddApplication()`
+  - [x] Хендлери замість `ExerciseService` / `IExerciseService`
+  - [x] Контролер через `IMediator.Send`
+  - [x] Прибрати інтерфейс сценарію з namespace Domain
 - **Залежності**: Зафіксувати CQRS+MediatR у документації; Зафіксувати ITrainingDbContext замість шару репозиторіїв
 
 ## Задача: Підключити EF Core і PostgreSQL

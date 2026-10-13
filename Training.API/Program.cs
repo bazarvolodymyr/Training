@@ -33,10 +33,5 @@ if(app.Environment.IsDevelopment())
 }
 
 app.MapControllers();
-//app.MapGet("/", ([FromServices]IExerciseService exerciseService) =>
-//{
-//    return exerciseService.GetExercise(1);
-//});
-
 app.UseCors("AllowAll");
 app.Run();
