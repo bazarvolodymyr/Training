@@ -23,7 +23,7 @@ SaaS для тренування іноземної мови (MVP-контент
 | Шар | Проєкт | Зараз |
 |---|---|---|
 | API | `Training.API` | ASP.NET Core 9, Swagger, CORS `AllowAll`, `ExerciseController`, маршрути `[controller]/[action]` |
-| Application | `Training.Application` | MediatR, `Features/Quiz` (`GetQuestionQuery`, `CheckAnswerCommand`), DTO в `Contracts/` |
+| Application | `Training.Application` | MediatR, `Features/Quiz` (`GetQuestionQuery`, `CheckAnswerCommand`), DTO поруч із хендлером |
 | Domain | `Training.Domain` | `Exercise`, `Lesson` (не в потоці), `ExerciseStatus` |
 | Persistence | `Training.Persistence` | In-memory заглушка, одне вшите завдання |
 | UI | `Training.UI` | Angular 19 standalone, `question-card`: гібрид поле + чіпи |

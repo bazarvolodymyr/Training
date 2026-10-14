@@ -1,5 +1,13 @@
 # Журнал змін
 
+## [2026-10-14] - DTO поруч із хендлерами
+
+### Змінено
+- `GetQuestion` перенесено до `Features/Quiz/Queries/GetQuestion` як `GetQuestionResponse`
+- `ExerciseResult` перенесено до `Features/Quiz/Commands/CheckAnswer` як `CheckAnswerResponse`
+- `AnswerResponse` перенесено до `Features/Quiz/Commands/CheckAnswer`
+- Прибрано спільну папку `Training.Application/Contracts`
+
 ## [2026-10-06] - Каркас CQRS+MediatR у Application
 
 ### Добавлено

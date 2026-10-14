@@ -69,6 +69,17 @@
   - [x] Прибрати інтерфейс сценарію з namespace Domain
 - **Залежності**: Зафіксувати CQRS+MediatR у документації; Зафіксувати ITrainingDbContext замість шару репозиторіїв
 
+## Задача: DTO поруч із хендлерами
+- **Статус**: Завершена
+- **Пріоритет**: Середній
+- **Опис**: Прибрати спільну папку `Contracts`. Контракт відповіді живе в папці свого Query або Command.
+- **Кроки виконання**:
+  - [x] `GetQuestionResponse` поруч із `GetQuestionQueryHandler`
+  - [x] `CheckAnswerResponse` і `AnswerResponse` поруч із `CheckAnswerCommandHandler`
+  - [x] Оновити посилання в запитах, командах і контролері
+  - [x] Видалити `Training.Application/Contracts`
+- **Залежності**: Каркас CQRS+MediatR у Application
+
 ## Задача: Підключити EF Core і PostgreSQL
 - **Статус**: Не почата
 - **Пріоритет**: Критичний

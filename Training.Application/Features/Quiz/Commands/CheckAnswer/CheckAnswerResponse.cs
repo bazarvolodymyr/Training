@@ -1,9 +1,9 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 using Training.Domain.Enums;
 
-namespace Training.Application.Contracts
+namespace Training.Application.Features.Quiz.Commands.CheckAnswer
 {
-    public record ExerciseResult
+    public record CheckAnswerResponse
     {
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public ExerciseStatus ExerciseStatus { get; set; }

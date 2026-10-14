@@ -1,6 +1,5 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Training.Application.Contracts;
 using Training.Application.Features.Quiz.Commands.CheckAnswer;
 using Training.Application.Features.Quiz.Queries.GetQuestion;
 
