@@ -25,7 +25,7 @@ SaaS для тренування іноземної мови (MVP-контент
 | API | `Training.API` | ASP.NET Core 9, Swagger, CORS `AllowAll`, `ExerciseController`, маршрути `[controller]/[action]` |
 | Application | `Training.Application` | MediatR, `Features/Quiz` (`GetQuestionQuery`, `CheckAnswerCommand`), DTO поруч із хендлером |
 | Domain | `Training.Domain` | `Exercise`, `Lesson` (не в потоці), `ExerciseStatus` |
-| Persistence | `Training.Persistence` | In-memory заглушка, одне вшите завдання |
+| Persistence | `Training.Persistence` | EF Core + PostgreSQL (`TrainingDbContext`); вікторина ще читає in-memory заглушку |
 | UI | `Training.UI` | Angular 19 standalone, `question-card`: гібрид поле + чіпи |
 
 **Що вже працює**
@@ -36,7 +36,7 @@ SaaS для тренування іноземної мови (MVP-контент
 
 **Борг відносно узгодженої цілі**
 
-- Немає PostgreSQL, REST `/api/v1`, CQRS+MediatR у Application, BFF/OAuth, ролей і підписки, статей, медіа, трьох режимів з сервера, прогресу, адмінки, GDPR-видалення.
+- Хендлери вікторини ще не читають PostgreSQL. Немає REST `/api/v1`, BFF/OAuth, ролей і підписки, статей, медіа, трьох режимів з сервера, прогресу, адмінки, GDPR-видалення.
 - Прототип UA→EN можна зберегти за змістом; контракт і `question-card` **дозволено ламати** на етапі 4.
 
 Локальні адреси: API `http://localhost:5166`, HTTPS `https://localhost:7014`. Базовий URL UI захардкоджений у `QuestionsService`.
@@ -245,7 +245,7 @@ Manager бачить **усі** уроки. Ліміт Standard — кількі
 | Backend | .NET 9, ASP.NET Core | nullable, тонкі контролери, REST `/api/v1` |
 | Application | **MediatR** + логічний CQRS | Command/Query handlers; одна БД; без event sourcing |
 | Дані | EF Core + **PostgreSQL**, міграції | `ITrainingDbContext` + один `TrainingDbContext`; Fluent API, індекси |
-| Dev infra | Docker Compose (PostgreSQL) | рядок підключення в secrets |
+| Dev infra | Docker Compose (PostgreSQL 17) | рядок підключення в user secrets |
 | Identity | ASP.NET Core Identity + OAuth + BFF cookie | ролі + policies + `Subscription` |
 | API docs | Swagger | Development / внутрішній контур |
 | Frontend | Angular 19, RxJS 7, TypeScript 5.7 | standalone; UI укр.; без i18n у етапі 3 |
@@ -256,9 +256,21 @@ Manager бачить **усі** уроки. Ліміт Standard — кількі
 | Час | UTC у БД | |
 | JSON | camelCase, enum рядком | |
 
-Планові пакети (не ставити до підтвердження задачі): `MediatR`, `Npgsql.EntityFrameworkCore.PostgreSQL`, Identity, auth cookie/BFF, OAuth providers, rate limiting.
+Планові пакети (не ставити до підтвердження задачі): Identity, auth cookie/BFF, OAuth providers, rate limiting.
 
 Хостинг і blob — після C2/C4.
+
+### 6.1 Локальний PostgreSQL
+
+Контейнер описаний у `docker-compose.yml` (користувач `training`, база `training`, порт `5432`). Пароль лишається в Compose для dev і в user secrets API, не в `appsettings`.
+
+```bash
+docker compose up -d
+dotnet user-secrets set "ConnectionStrings:Training" "Host=localhost;Port=5432;Database=training;Username=training;Password=training" --project Training.API
+dotnet ef database update --project Training.Persistence --startup-project Training.API
+```
+
+`dotnet ef` ставиться локально: `dotnet tool restore` у корені репозиторію.
 
 ---
 
@@ -325,3 +337,4 @@ Manager бачить **усі** уроки. Ліміт Standard — кількі
 | 2026-09-21 | Перенесено відповіді з `qa.md`: UA→EN, мово-агностична модель, PostgreSQL/Docker, BFF+OAuth, WYSIWYG+медіа, REST, підписка, ліміт 10, прогрес по 100 і рівнях, weighted random, GDPR, `/admin` |
 | 2026-10-06 | Application: логічний CQRS + MediatR, одна PostgreSQL; без окремої read-БД і event sourcing |
 | 2026-10-06 | Доступ до даних: `ITrainingDbContext` + хендлери; `I{Name}Repository` не є правилом, лише вузькі абстракції за змістом |
+| 2026-10-15 | Dev: Docker PostgreSQL 17, EF Core, перша міграція; рядок підключення в user secrets |

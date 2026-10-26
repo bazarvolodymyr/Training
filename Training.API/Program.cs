@@ -10,7 +10,7 @@ services.AddSwaggerGen();
 
 services
     .AddApplication()
-    .AddPersistence();
+    .AddPersistence(builder.Configuration);
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>

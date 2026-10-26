@@ -81,14 +81,14 @@
 - **Залежності**: Каркас CQRS+MediatR у Application
 
 ## Задача: Підключити EF Core і PostgreSQL
-- **Статус**: Не почата
+- **Статус**: Завершена
 - **Пріоритет**: Критичний
 - **Опис**: Docker Compose з PostgreSQL, EF Core + Npgsql. `ITrainingDbContext` у Application, `TrainingDbContext` у Persistence, рядок підключення через secrets, перша міграція.
 - **Кроки виконання**:
-  - [ ] `docker-compose` (PostgreSQL) і інструкція запуску в документації
-  - [ ] Пакети EF Core / Npgsql
-  - [ ] `ITrainingDbContext` + `TrainingDbContext`, реєстрація `AddScoped` у `AddPersistence()`
-  - [ ] Перша міграція; не створювати generic-репозиторії
+  - [x] `docker-compose` (PostgreSQL) і інструкція запуску в документації
+  - [x] Пакети EF Core / Npgsql
+  - [x] `ITrainingDbContext` + `TrainingDbContext`, реєстрація `AddScoped` у `AddPersistence()`
+  - [x] Перша міграція; не створювати generic-репозиторії
 - **Залежності**: Закрити блокуючі питання з qa.md; Каркас CQRS+MediatR у Application (можна паралельно, якщо каркас уже є)
 
 ## Задача: Персистити Lesson та Exercise

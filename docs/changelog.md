@@ -1,5 +1,18 @@
 # Журнал змін
 
+## [2026-10-15] - EF Core і PostgreSQL
+
+### Добавлено
+- `docker-compose.yml` з PostgreSQL 17 для локальної розробки
+- `ITrainingDbContext` у Application і `TrainingDbContext` у Persistence (Npgsql)
+- Перша міграція поточних `Lesson` і `Exercise`
+- Рядок підключення `ConnectionStrings:Training` через user secrets
+- Локальний інструмент `dotnet-ef` 10.0.13 (`dotnet-tools.json`)
+
+### Змінено
+- `AddPersistence(IConfiguration)` реєструє контекст як `AddScoped`
+- Інструкція запуску PostgreSQL у `Project.md`
+
 ## [2026-10-14] - DTO поруч із хендлерами
 
 ### Змінено
