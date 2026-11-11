@@ -17,25 +17,7 @@ namespace Training.Persistence
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Lesson>(lesson =>
-            {
-                lesson.ToTable("Lessons");
-                lesson.HasKey(x => x.Id);
-                lesson.Property(x => x.Name).IsRequired().HasMaxLength(200);
-            lesson.HasMany(x => x.Exercises)
-                .WithOne()
-                .HasForeignKey("LessonId")
-                .IsRequired()
-                .OnDelete(DeleteBehavior.Cascade);
-            });
-
-            modelBuilder.Entity<Exercise>(exercise =>
-            {
-                exercise.ToTable("Exercises");
-                exercise.HasKey(x => x.Id);
-                exercise.Property(x => x.Question).IsRequired();
-                exercise.Property(x => x.Answer).IsRequired();
-            });
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(TrainingDbContext).Assembly);
         }
     }
 }

@@ -92,14 +92,14 @@
 - **Залежності**: Закрити блокуючі питання з qa.md; Каркас CQRS+MediatR у Application (можна паралельно, якщо каркас уже є)
 
 ## Задача: Персистити Lesson та Exercise
-- **Статус**: Не почата
+- **Статус**: Завершена
 - **Пріоритет**: Критичний
 - **Опис**: Розширити `Lesson`/`Exercise`: HTML статті, мови, токени/словосполучення, синоніми, дистрактори, порядок для ліміту Standard. Сид замість захардкодженого `GetExercise(1)`.
 - **Кроки виконання**:
-  - [ ] Поля статті (HTML, IsPublished, порядок, sourceLang/targetLang)
-  - [ ] Поля вправи (source, answer, synonyms, tokens, distractors, режими)
-  - [ ] Хендлери читають через `ITrainingDbContext` (PostgreSQL)
-  - [ ] Прибрати `IExerciseRepository` / in-memory заглушку
+  - [x] Поля статті (HTML, IsPublished, порядок, sourceLang/targetLang)
+  - [x] Поля вправи (source, answer, synonyms, tokens, distractors, режими)
+  - [x] Хендлери читають через `ITrainingDbContext` (PostgreSQL)
+  - [x] Прибрати `IExerciseRepository` / in-memory заглушку
 - **Залежності**: Підключити EF Core і PostgreSQL
 
 ---

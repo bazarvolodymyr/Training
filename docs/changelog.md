@@ -1,5 +1,20 @@
 # Журнал змін
 
+## [2026-11-08] - Lesson і Exercise у PostgreSQL
+
+### Добавлено
+- Поля статті в `Lesson`: HTML, `IsPublished`, `SortOrder`, `SourceLang`, `TargetLang`
+- Поля вправи: `Source`, канонічна відповідь, синоніми, токени, дистрактори, дозволені режими, `SortOrder`
+- Сид одного опублікованого уроку UA→EN замість захардкодженого `GetExercise(1)`
+- Міграція `PersistLessonAndExercise`
+
+### Змінено
+- `GetQuestionQueryHandler` і `CheckAnswerCommandHandler` читають через `ITrainingDbContext`
+- GET як і раніше віддає лише `id` і текст питання, без канону
+
+### Виправлено
+- Прибрано `IExerciseRepository` і in-memory `ExerciseRepository`
+
 ## [2026-10-15] - EF Core і PostgreSQL
 
 ### Добавлено

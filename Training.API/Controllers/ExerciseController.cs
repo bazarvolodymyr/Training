@@ -27,7 +27,7 @@ namespace Training.API.Controllers
         public async Task<IActionResult> QuestionResponse(AnswerResponse answer, CancellationToken cancellationToken)
         {
             var result = await _mediator.Send(new CheckAnswerCommand(answer.Id, answer.Answer), cancellationToken);
-            return Ok(result);
+            return result is null ? NotFound() : Ok(result);
         }
     }
 }

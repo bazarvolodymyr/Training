@@ -1,30 +1,31 @@
 using MediatR;
-using Training.Domain.Interfaces.Repositories;
+using Microsoft.EntityFrameworkCore;
+using Training.Application.Interfaces;
 
 namespace Training.Application.Features.Quiz.Queries.GetQuestion
 {
     public class GetQuestionQueryHandler : IRequestHandler<GetQuestionQuery, GetQuestionResponse?>
     {
-        private readonly IExerciseRepository _exerciseRepository;
+        private readonly ITrainingDbContext _db;
 
-        public GetQuestionQueryHandler(IExerciseRepository exerciseRepository)
+        public GetQuestionQueryHandler(ITrainingDbContext db)
         {
-            _exerciseRepository = exerciseRepository;
+            _db = db;
         }
 
-        public Task<GetQuestionResponse?> Handle(GetQuestionQuery request, CancellationToken cancellationToken)
+        public async Task<GetQuestionResponse?> Handle(GetQuestionQuery request, CancellationToken cancellationToken)
         {
-            var exercise = _exerciseRepository.GetExercise(1);
-            if (exercise is null)
-            {
-                return Task.FromResult<GetQuestionResponse?>(null);
-            }
-
-            return Task.FromResult<GetQuestionResponse?>(new GetQuestionResponse
-            {
-                Id = exercise.Id,
-                Question = exercise.Question
-            });
+            return await _db.Exercises.AsNoTracking()
+                .Where(exercise => exercise.Lesson!.IsPublished)
+                .OrderBy(exercise => exercise.Lesson!.SortOrder)
+                .ThenBy(exercise => exercise.SortOrder)
+                .ThenBy(exercise => exercise.Id)
+                .Select(exercise => new GetQuestionResponse
+                {
+                    Id = exercise.Id,
+                    Question = exercise.Source
+                })
+                .FirstOrDefaultAsync(cancellationToken);
         }
     }
 }

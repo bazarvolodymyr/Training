@@ -18,14 +18,14 @@ SaaS для тренування іноземної мови (MVP-контент
 
 ## 2. Поточний стан (прототип)
 
-Репозиторій містить вертикальний зріз вікторини без БД, без облікових записів і без статей.
+Репозиторій містить вертикальний зріз вікторини на PostgreSQL, без облікових записів і без віддачі статті в API.
 
 | Шар | Проєкт | Зараз |
 |---|---|---|
 | API | `Training.API` | ASP.NET Core 9, Swagger, CORS `AllowAll`, `ExerciseController`, маршрути `[controller]/[action]` |
 | Application | `Training.Application` | MediatR, `Features/Quiz` (`GetQuestionQuery`, `CheckAnswerCommand`), DTO поруч із хендлером |
-| Domain | `Training.Domain` | `Exercise`, `Lesson` (не в потоці), `ExerciseStatus` |
-| Persistence | `Training.Persistence` | EF Core + PostgreSQL (`TrainingDbContext`); вікторина ще читає in-memory заглушку |
+| Domain | `Training.Domain` | `Lesson` (HTML, мови, публікація, порядок), `Exercise` (source, відповідь, синоніми, токени, дистрактори, режими), `ExerciseStatus` |
+| Persistence | `Training.Persistence` | EF Core + PostgreSQL; сид уроку; хендлери вікторини через `ITrainingDbContext` |
 | UI | `Training.UI` | Angular 19 standalone, `question-card`: гібрид поле + чіпи |
 
 **Що вже працює**
@@ -36,7 +36,7 @@ SaaS для тренування іноземної мови (MVP-контент
 
 **Борг відносно узгодженої цілі**
 
-- Хендлери вікторини ще не читають PostgreSQL. Немає REST `/api/v1`, BFF/OAuth, ролей і підписки, статей, медіа, трьох режимів з сервера, прогресу, адмінки, GDPR-видалення.
+- Немає REST `/api/v1`, BFF/OAuth, ролей і підписки, віддачі статті й банку токенів, медіа, прогресу, адмінки, GDPR-видалення. Перевірка відповіді ще trim + lowercase.
 - Прототип UA→EN можна зберегти за змістом; контракт і `question-card` **дозволено ламати** на етапі 4.
 
 Локальні адреси: API `http://localhost:5166`, HTTPS `https://localhost:7014`. Базовий URL UI захардкоджений у `QuestionsService`.
@@ -141,7 +141,7 @@ docker-compose          PostgreSQL для dev
 
 - **Query** — читання без зміни стану. Не віддає канонічну відповідь (`GetNextQuestion`, каталог уроків, прогрес, аналітика).
 - **Command** — зміна стану. `SubmitAttempt` у **одній транзакції** пише спробу й оновлює прогрес рівня (інакше безперервна вікторина й GDPR-erase ламаються).
-- **MediatR** — `IRequest` / `IRequestHandler`, `IMediator.Send` з тонкого контролера. Pipeline: валідація, logging. Нових `I{Name}Service` у Domain не додаємо. Прототип уже на `GetQuestionQuery` / `CheckAnswerCommand` (ще через `IExerciseRepository`, до появи `ITrainingDbContext`).
+- **MediatR** — `IRequest` / `IRequestHandler`, `IMediator.Send` з тонкого контролера. Pipeline: валідація, logging. Нових `I{Name}Service` у Domain не додаємо. Прототип: `GetQuestionQuery` / `CheckAnswerCommand` через `ITrainingDbContext`.
 - **Один** `TrainingDbContext` (PostgreSQL) за інтерфейсом `ITrainingDbContext`. Query: `AsNoTracking` де можливо. Аналітика пізніше — таблиця snapshot у тій самій БД, не окремий store.
 - Структура за фічами, не плоский `Services/`:
 
@@ -162,7 +162,7 @@ Training.Application/Features/{Feature}/
 EF Core уже є Unit of Work і змінює кілька сутностей в одній транзакції. Другий шар `IRepository<T>` поверх `DbSet<T>` для цього продукту не потрібен.
 
 - Хендлер залежить від **`ITrainingDbContext`** (у Application). `TrainingDbContext` у Persistence **реалізує** цей інтерфейс. Application може посилатися на EF Core заради `DbSet` / `AsNoTracking` — прийнятий компроміс.
-- Domain містить лише моделі та enum. **Не** додавати `I{Name}Repository` як правило. Поточний `IExerciseRepository` — борг прототипу (in-memory), прибрати після підключення EF.
+- Domain містить лише моделі та enum. **Не** додавати `I{Name}Repository` як правило. In-memory `IExerciseRepository` прибрано.
 - Generic CRUD-репозиторій заборонений як стандарт.
 - Вузька абстракція **за змістом, не `*Repository`** (`IQuestionPicker`, `IProgressReader`) — лише якщо той самий важкий запит потрібен двом хендлерам або LINQ у хендлері стає нечитабельним. Кандидат: weighted random + ліміт 10 без канону.
 - Звичайні сценарії (стаття, submit + прогрес, адмін CRUD, GDPR erase, аналітика) — LINQ у хендлері через `ITrainingDbContext` і один `SaveChangesAsync`.
@@ -338,3 +338,4 @@ dotnet ef database update --project Training.Persistence --startup-project Train
 | 2026-10-06 | Application: логічний CQRS + MediatR, одна PostgreSQL; без окремої read-БД і event sourcing |
 | 2026-10-06 | Доступ до даних: `ITrainingDbContext` + хендлери; `I{Name}Repository` не є правилом, лише вузькі абстракції за змістом |
 | 2026-10-15 | Dev: Docker PostgreSQL 17, EF Core, перша міграція; рядок підключення в user secrets |
+| 2026-11-08 | `Lesson`/`Exercise` збережені в PostgreSQL; хендлери читають контекст; in-memory репозиторій прибрано |

@@ -1,31 +1,38 @@
 using MediatR;
+using Microsoft.EntityFrameworkCore;
+using Training.Application.Interfaces;
 using Training.Domain.Enums;
-using Training.Domain.Interfaces.Repositories;
 
 namespace Training.Application.Features.Quiz.Commands.CheckAnswer
 {
-    public class CheckAnswerCommandHandler : IRequestHandler<CheckAnswerCommand, CheckAnswerResponse>
+    public class CheckAnswerCommandHandler : IRequestHandler<CheckAnswerCommand, CheckAnswerResponse?>
     {
-        private readonly IExerciseRepository _exerciseRepository;
+        private readonly ITrainingDbContext _db;
 
-        public CheckAnswerCommandHandler(IExerciseRepository exerciseRepository)
+        public CheckAnswerCommandHandler(ITrainingDbContext db)
         {
-            _exerciseRepository = exerciseRepository;
+            _db = db;
         }
 
-        public Task<CheckAnswerResponse> Handle(CheckAnswerCommand request, CancellationToken cancellationToken)
+        public async Task<CheckAnswerResponse?> Handle(CheckAnswerCommand request, CancellationToken cancellationToken)
         {
-            var exercise = _exerciseRepository.GetExercise(request.Id);
+            var exercise = await _db.Exercises.AsNoTracking()
+                .FirstOrDefaultAsync(item => item.Id == request.Id, cancellationToken);
+            if (exercise is null)
+            {
+                return null;
+            }
+
             var isCorrect = request.Answer != null
                 && exercise.Answer.ToLower().Trim() == request.Answer.ToLower().Trim();
 
-            return Task.FromResult(new CheckAnswerResponse
+            return new CheckAnswerResponse
             {
                 ExerciseStatus = isCorrect ? ExerciseStatus.Success : ExerciseStatus.Failure,
-                Question = exercise.Question,
+                Question = exercise.Source,
                 Answer = request.Answer,
                 CorrectAnswer = exercise.Answer
-            });
+            };
         }
     }
 }
