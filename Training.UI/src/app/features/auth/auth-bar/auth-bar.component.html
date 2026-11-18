@@ -1,0 +1,8 @@
+<div class="auth-bar">
+  @if (user()?.isAuthenticated) {
+    <span>{{ user()?.email }}</span>
+    <button type="button" (click)="logout()">Вийти</button>
+  } @else {
+    <a [href]="loginUrl()">Увійти через Google</a>
+  }
+</div>

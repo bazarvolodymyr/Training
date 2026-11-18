@@ -1,10 +1,12 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Training.Application.Interfaces;
 using Training.Domain.Models;
 
 namespace Training.Persistence
 {
-    public class TrainingDbContext : DbContext, ITrainingDbContext
+    public class TrainingDbContext : IdentityDbContext<TrainingUser, IdentityRole, string>, ITrainingDbContext
     {
         public TrainingDbContext(DbContextOptions<TrainingDbContext> options)
             : base(options)
@@ -17,6 +19,7 @@ namespace Training.Persistence
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            base.OnModelCreating(modelBuilder);
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(TrainingDbContext).Assembly);
         }
     }

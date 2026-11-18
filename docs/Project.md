@@ -36,7 +36,7 @@ SaaS для тренування іноземної мови (MVP-контент
 
 **Борг відносно узгодженої цілі**
 
-- Немає REST `/api/v1`, BFF/OAuth, ролей і підписки, віддачі статті й банку токенів, медіа, прогресу, адмінки, GDPR-видалення. Перевірка відповіді ще trim + lowercase.
+- Немає ролей і підписки, віддачі статті й банку токенів, медіа, прогресу, адмінки, GDPR-видалення. Google OAuth — заглушка. Перевірка відповіді ще trim + lowercase.
 - Прототип UA→EN можна зберегти за змістом; контракт і `question-card` **дозволено ламати** на етапі 4.
 
 Локальні адреси: API `http://localhost:5166`, HTTPS `https://localhost:7014`. Базовий URL UI захардкоджений у `QuestionsService`.
@@ -67,7 +67,7 @@ SaaS для тренування іноземної мови (MVP-контент
 
 - HTTPS поза Development, HSTS. CORS лише на origin UI, з credentials (BFF-cookie). Не `AllowAll` у проді.
 - **BFF:** access/refresh не зберігаються в JS. Сесійна cookie: `HttpOnly` + `Secure` + `SameSite`. Refresh **30 днів**. CSRF: antiforgery / SameSite + перевірка origin.
-- Вхід через **OAuth** (провайдер — див. відкрите B1 у `qa.md`). Identity лишається store користувача, ролей і зовнішніх логінів.
+- Вхід через **Google OAuth**. Зараз це заглушка (локальна сторінка, без виклику Google). Identity лишається store користувача, ролей і зовнішніх логінів.
 - Lockout на локальні спроби (якщо з’явиться парольний fallback). Email confirmation **не** блокує вікторину.
 - Policy-based authorization на захищених endpoint. Перевірка відповіді **тільки на сервері**. На складному рівні банк слів не віддається. На легкому/середньому — перемішані токени без позначки «правильне».
 - Статті: HTML з адмінки **санітизувати** на записі (XSS, javascript: URL, небезпечні теги). Аудіо/зображення — лише з нашого сховища.
@@ -104,7 +104,7 @@ SaaS для тренування іноземної мови (MVP-контент
 | Модель SaaS | B2C, один продукт, багато користувачів, RBAC. Без tenant / шкіл |
 | Мови | Поля `sourceLang` / `targetLang` у контенті. MVP-контент: UA→EN, один напрямок. Інших мов у перший рік немає |
 | БД | PostgreSQL, dev — Docker |
-| Auth | BFF + cookie-сесія 30 днів, OAuth, Identity як store |
+| Auth | BFF + cookie-сесія 30 днів, Google OAuth (заглушка), Identity як store |
 | Статті | WYSIWYG HTML у БД, рендер і санітизація на UI; медіа (зображення, таблиці, аудіо) |
 | Перевірка | Нормалізація + ігнор пунктуації + синоніми; апостроф значущий; після помилки — diff; регістр зберігається в канонічній формі |
 | Видача питань | Безперервно, випадково, без ліміту спроб. Після **правильної** відповіді знижується ймовірність цього ж питання |
@@ -118,7 +118,7 @@ SaaS для тренування іноземної мови (MVP-контент
 | Адмінка | `/admin` у тому ж Angular, окремий SPA не потрібен |
 | Процес | Підтвердження **кожної задачі**, не етапу цілком |
 
-Ще відкриті: провайдер OAuth, хостинг, сховище файлів і ліміти, мердж анонімних спроб, строк зберігання сирих спроб — `qa.md`.
+Ще відкриті: хостинг, сховище файлів і ліміти, мердж анонімних спроб, строк зберігання сирих спроб — `qa.md`. Google OAuth у коді — заглушка.
 
 ### 5.1 Структура рішення
 
@@ -203,7 +203,7 @@ Manager бачить **усі** уроки. Ліміт Standard — кількі
 
 | Група | Приклади | Доступ |
 |---|---|---|
-| Auth | `POST /api/v1/auth/oauth/{provider}`, callback, `POST /api/v1/auth/logout`, `GET /api/v1/auth/me` | анонім / власник сесії |
+| Auth | `GET /api/v1/auth/oauth/google`, callback, `POST /api/v1/auth/logout`, `GET /api/v1/auth/me` | анонім / власник сесії |
 | Lessons | `GET /api/v1/lessons`, `GET /api/v1/lessons/{id}` | публічно (опубліковані) |
 | Exercises | `GET /api/v1/lessons/{id}/questions/next?difficulty=`, `POST /api/v1/exercises/{id}/attempts` | демо / Standard / Premium за правилами |
 | Progress | `GET /api/v1/me/progress` | власник |
@@ -256,7 +256,7 @@ Manager бачить **усі** уроки. Ліміт Standard — кількі
 | Час | UTC у БД | |
 | JSON | camelCase, enum рядком | |
 
-Планові пакети (не ставити до підтвердження задачі): Identity, auth cookie/BFF, OAuth providers, rate limiting.
+Планові пакети (не ставити до підтвердження задачі): rate limiting. Справжній Google client id — коли заглушку замінимо.
 
 Хостинг і blob — після C2/C4.
 
@@ -339,3 +339,4 @@ dotnet ef database update --project Training.Persistence --startup-project Train
 | 2026-10-06 | Доступ до даних: `ITrainingDbContext` + хендлери; `I{Name}Repository` не є правилом, лише вузькі абстракції за змістом |
 | 2026-10-15 | Dev: Docker PostgreSQL 17, EF Core, перша міграція; рядок підключення в user secrets |
 | 2026-11-08 | `Lesson`/`Exercise` збережені в PostgreSQL; хендлери читають контекст; in-memory репозиторій прибрано |
+| 2026-11-11 | B1: провайдер MVP — Google. У коді заглушка OAuth і BFF-cookie на 30 днів |

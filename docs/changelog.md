@@ -1,5 +1,18 @@
 # Журнал змін
 
+## [2026-11-11] - BFF-сесія і заглушка Google OAuth
+
+### Добавлено
+- ASP.NET Core Identity у `TrainingDbContext` (користувач і зовнішні логіни)
+- `GET /api/v1/auth/oauth/google`, callback, `GET /api/v1/auth/me`, `POST /api/v1/auth/logout`
+- Заглушка Google: локальна сторінка входу, без запиту до Google
+- Cookie-сесія BFF на 30 днів (`HttpOnly`, `SameSite=Lax`) і антифорджері для logout
+- На UI посилання «Увійти через Google» і вихід
+
+### Змінено
+- CORS: origin UI `http://localhost:4200` з credentials замість `AllowAll`
+- У `qa.md` B1 закрито: провайдер MVP — Google
+
 ## [2026-11-08] - Lesson і Exercise у PostgreSQL
 
 ### Добавлено

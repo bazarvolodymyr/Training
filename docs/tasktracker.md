@@ -107,14 +107,14 @@
 ## Етап 2. Безпека доступу
 
 ## Задача: Реєстрація та автентифікація (OAuth + BFF)
-- **Статус**: Не почата
+- **Статус**: Завершена
 - **Пріоритет**: Критичний
 - **Опис**: Identity store, OAuth, BFF cookie-сесія 30 днів, logout, `/api/v1/auth/me`. Підтвердження email не блокує доступ.
 - **Кроки виконання**:
-  - [ ] Узгодити провайдер(и) OAuth (`qa.md` B1)
-  - [ ] Identity + зовнішні логіни
-  - [ ] BFF cookie, CSRF, CORS з credentials
-  - [ ] UI входу через OAuth
+  - [x] Узгодити провайдер(и) OAuth (`qa.md` B1): Google, зараз заглушка
+  - [x] Identity + зовнішні логіни
+  - [x] BFF cookie, CSRF, CORS з credentials
+  - [x] UI входу через OAuth
 - **Залежності**: Підключити EF Core і PostgreSQL; відповідь B1
 
 ## Задача: Ролі та підписка Premium
