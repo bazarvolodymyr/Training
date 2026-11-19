@@ -1,5 +1,18 @@
 # Журнал змін
 
+## [2026-11-18] - Ролі та підписка Premium
+
+### Добавлено
+- Ролі `Standard`, `Premium`, `Manager`, `Admin` і сид одного Admin (`Auth:AdminEmail`)
+- Сутність `Subscription` (`ExpiresAt`, хто видав); активна, якщо `ExpiresAt` пізніше за UTC зараз
+- Політики API: `Content.Practice`, `Content.PracticeFull`, `Content.Edit`
+- Новий OAuth-користувач без ролі отримує `Standard`
+- `GET /api/v1/auth/me` повертає ролі і `premiumActive`
+
+### Змінено
+- Повний пул вправ: роль `Premium` і активна підписка, або `Manager` / `Admin`
+- Демо `Exercise/GetQuestion` лишається без авторизації
+
 ## [2026-11-11] - BFF-сесія і заглушка Google OAuth
 
 ### Добавлено

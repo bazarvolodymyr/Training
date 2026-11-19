@@ -387,6 +387,33 @@ namespace Training.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Training.Domain.Models.Subscription", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("IssuedByUserId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IssuedByUserId");
+
+                    b.HasIndex("UserId", "ExpiresAt");
+
+                    b.ToTable("Subscriptions", (string)null);
+                });
+
             modelBuilder.Entity("Training.Domain.Models.TrainingUser", b =>
                 {
                     b.Property<string>("Id")
@@ -547,6 +574,22 @@ namespace Training.Persistence.Migrations
                         .HasForeignKey("ExerciseId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Training.Domain.Models.Subscription", b =>
+                {
+                    b.HasOne("Training.Domain.Models.TrainingUser", null)
+                        .WithMany()
+                        .HasForeignKey("IssuedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Training.Domain.Models.TrainingUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Training.Domain.Models.Exercise", b =>

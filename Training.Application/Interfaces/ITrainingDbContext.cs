@@ -9,6 +9,8 @@ namespace Training.Application.Interfaces
 
         DbSet<Exercise> Exercises { get; }
 
+        DbSet<Subscription> Subscriptions { get; }
+
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
 }

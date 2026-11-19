@@ -5,7 +5,10 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using Microsoft.EntityFrameworkCore;
 using Training.API.Auth;
+using Training.Application.Interfaces;
+using Training.Domain;
 using Training.Domain.Models;
 
 namespace Training.API.Controllers
@@ -16,17 +19,20 @@ namespace Training.API.Controllers
         private readonly SignInManager<TrainingUser> _signInManager;
         private readonly UserManager<TrainingUser> _userManager;
         private readonly IAntiforgery _antiforgery;
+        private readonly ITrainingDbContext _db;
         private readonly AuthOptions _auth;
 
         public AuthController(
             SignInManager<TrainingUser> signInManager,
             UserManager<TrainingUser> userManager,
             IAntiforgery antiforgery,
+            ITrainingDbContext db,
             IOptions<AuthOptions> auth)
         {
             _signInManager = signInManager;
             _userManager = userManager;
             _antiforgery = antiforgery;
+            _db = db;
             _auth = auth.Value;
         }
 
@@ -98,11 +104,8 @@ namespace Training.API.Controllers
                 return BadRequest();
             }
 
-            var signIn = await _signInManager.ExternalLoginSignInAsync(
-                info.LoginProvider,
-                info.ProviderKey,
-                isPersistent: true);
-            if (!signIn.Succeeded)
+            var user = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
+            if (user is null)
             {
                 var email = info.Principal.FindFirstValue(ClaimTypes.Email);
                 if (string.IsNullOrWhiteSpace(email))
@@ -110,7 +113,7 @@ namespace Training.API.Controllers
                     return BadRequest();
                 }
 
-                var user = await _userManager.FindByEmailAsync(email);
+                user = await _userManager.FindByEmailAsync(email);
                 if (user is null)
                 {
                     user = new TrainingUser
@@ -131,10 +134,15 @@ namespace Training.API.Controllers
                 {
                     return BadRequest();
                 }
-
-                await _signInManager.SignInAsync(user, isPersistent: true);
             }
 
+            if ((await _userManager.GetRolesAsync(user)).Count == 0)
+            {
+                await _userManager.AddToRoleAsync(user, TrainingRoles.Standard);
+            }
+
+            await _signInManager.SignInAsync(user, isPersistent: true);
+            await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
             return Redirect(SafeReturnUrl(returnUrl));
         }
 
@@ -152,11 +160,16 @@ namespace Training.API.Controllers
 
             if (User.Identity?.IsAuthenticated != true)
             {
-                return Ok(new AuthMeResponse(false, null, null));
+                return Ok(new AuthMeResponse(false, null, null, [], false));
             }
 
             var user = await _userManager.GetUserAsync(User);
-            return Ok(new AuthMeResponse(true, user?.Email, user?.UserName));
+            var roles = user is null
+                ? []
+                : (await _userManager.GetRolesAsync(user)).ToArray();
+            var premiumActive = user is not null && await _db.Subscriptions.AsNoTracking()
+                .AnyAsync(subscription => subscription.UserId == user.Id && subscription.ExpiresAt > DateTimeOffset.UtcNow);
+            return Ok(new AuthMeResponse(true, user?.Email, user?.UserName, roles, premiumActive));
         }
 
         [HttpPost("logout")]
@@ -233,5 +246,10 @@ namespace Training.API.Controllers
         }
     }
 
-    public record AuthMeResponse(bool IsAuthenticated, string? Email, string? Name);
+    public record AuthMeResponse(
+        bool IsAuthenticated,
+        string? Email,
+        string? Name,
+        IReadOnlyList<string> Roles,
+        bool PremiumActive);
 }

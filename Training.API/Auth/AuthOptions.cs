@@ -6,6 +6,8 @@ namespace Training.API.Auth
 
         public string UiOrigin { get; set; } = "http://localhost:4200";
 
+        public string AdminEmail { get; set; } = "admin@training.local";
+
         public GoogleAuthOptions Google { get; set; } = new();
     }
 

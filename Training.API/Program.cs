@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Training.API.Auth;
+using Training.Domain;
 using Training.Application;
 using Training.Domain.Models;
 using Training.Persistence;
@@ -28,6 +30,22 @@ services.AddIdentity<TrainingUser, IdentityRole>(options =>
     })
     .AddEntityFrameworkStores<TrainingDbContext>()
     .AddDefaultTokenProviders();
+
+services.AddScoped<IdentitySeeder>();
+services.AddScoped<IAuthorizationHandler, FullExerciseAccessHandler>();
+services.AddAuthorization(options =>
+{
+    options.AddPolicy(TrainingPolicies.Practice, policy => policy.RequireRole(
+        TrainingRoles.Standard,
+        TrainingRoles.Premium,
+        TrainingRoles.Manager,
+        TrainingRoles.Admin));
+    options.AddPolicy(TrainingPolicies.PracticeFull, policy =>
+        policy.Requirements.Add(new FullExerciseAccessRequirement()));
+    options.AddPolicy(TrainingPolicies.EditContent, policy => policy.RequireRole(
+        TrainingRoles.Manager,
+        TrainingRoles.Admin));
+});
 
 services.ConfigureApplicationCookie(options =>
 {
@@ -76,6 +94,12 @@ if (app.Environment.IsDevelopment())
     app.UseDeveloperExceptionPage();
     app.UseSwagger();
     app.UseSwaggerUI();
+}
+
+await using (var scope = app.Services.CreateAsyncScope())
+{
+    var seeder = scope.ServiceProvider.GetRequiredService<IdentitySeeder>();
+    await seeder.SeedAsync();
 }
 
 app.UseCors("Ui");

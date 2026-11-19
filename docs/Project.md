@@ -24,7 +24,7 @@ SaaS для тренування іноземної мови (MVP-контент
 |---|---|---|
 | API | `Training.API` | ASP.NET Core 9, Swagger, CORS `AllowAll`, `ExerciseController`, маршрути `[controller]/[action]` |
 | Application | `Training.Application` | MediatR, `Features/Quiz` (`GetQuestionQuery`, `CheckAnswerCommand`), DTO поруч із хендлером |
-| Domain | `Training.Domain` | `Lesson` (HTML, мови, публікація, порядок), `Exercise` (source, відповідь, синоніми, токени, дистрактори, режими), `ExerciseStatus` |
+| Domain | `Training.Domain` | `Lesson`, `Exercise`, `Subscription`, ролі Standard/Premium/Manager/Admin |
 | Persistence | `Training.Persistence` | EF Core + PostgreSQL; сид уроку; хендлери вікторини через `ITrainingDbContext` |
 | UI | `Training.UI` | Angular 19 standalone, `question-card`: гібрид поле + чіпи |
 
@@ -36,7 +36,7 @@ SaaS для тренування іноземної мови (MVP-контент
 
 **Борг відносно узгодженої цілі**
 
-- Немає ролей і підписки, віддачі статті й банку токенів, медіа, прогресу, адмінки, GDPR-видалення. Google OAuth — заглушка. Перевірка відповіді ще trim + lowercase.
+- Немає віддачі статті й банку токенів, медіа, прогресу, адмінки, видачі Premium і GDPR-видалення. Google OAuth — заглушка. Демо-вікторина без авторизації. Перевірка відповіді ще trim + lowercase.
 - Прототип UA→EN можна зберегти за змістом; контракт і `question-card` **дозволено ламати** на етапі 4.
 
 Локальні адреси: API `http://localhost:5166`, HTTPS `https://localhost:7014`. Базовий URL UI захардкоджений у `QuestionsService`.
@@ -340,3 +340,4 @@ dotnet ef database update --project Training.Persistence --startup-project Train
 | 2026-10-15 | Dev: Docker PostgreSQL 17, EF Core, перша міграція; рядок підключення в user secrets |
 | 2026-11-08 | `Lesson`/`Exercise` збережені в PostgreSQL; хендлери читають контекст; in-memory репозиторій прибрано |
 | 2026-11-11 | B1: провайдер MVP — Google. У коді заглушка OAuth і BFF-cookie на 30 днів |
+| 2026-11-18 | Ролі Identity, `Subscription.ExpiresAt`, політики матеріалів; сид одного Admin |

@@ -17,6 +17,8 @@ namespace Training.Persistence
 
         public DbSet<Exercise> Exercises => Set<Exercise>();
 
+        public DbSet<Subscription> Subscriptions => Set<Subscription>();
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
