@@ -4,10 +4,10 @@ using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using MediatR;
 using Microsoft.Extensions.Options;
-using Microsoft.EntityFrameworkCore;
 using Training.API.Auth;
-using Training.Application.Interfaces;
+using Training.Application.Features.Subscription.Queries.HasActiveSubscription;
 using Training.Domain;
 using Training.Domain.Models;
 
@@ -19,20 +19,20 @@ namespace Training.API.Controllers
         private readonly SignInManager<TrainingUser> _signInManager;
         private readonly UserManager<TrainingUser> _userManager;
         private readonly IAntiforgery _antiforgery;
-        private readonly ITrainingDbContext _db;
+        private readonly IMediator _mediator;
         private readonly AuthOptions _auth;
 
         public AuthController(
             SignInManager<TrainingUser> signInManager,
             UserManager<TrainingUser> userManager,
             IAntiforgery antiforgery,
-            ITrainingDbContext db,
+            IMediator mediator,
             IOptions<AuthOptions> auth)
         {
             _signInManager = signInManager;
             _userManager = userManager;
             _antiforgery = antiforgery;
-            _db = db;
+            _mediator = mediator;
             _auth = auth.Value;
         }
 
@@ -167,8 +167,8 @@ namespace Training.API.Controllers
             var roles = user is null
                 ? []
                 : (await _userManager.GetRolesAsync(user)).ToArray();
-            var premiumActive = user is not null && await _db.Subscriptions.AsNoTracking()
-                .AnyAsync(subscription => subscription.UserId == user.Id && subscription.ExpiresAt > DateTimeOffset.UtcNow);
+            var premiumActive = user is not null
+                && await _mediator.Send(new HasActiveSubscriptionQuery(user.Id), HttpContext.RequestAborted);
             return Ok(new AuthMeResponse(true, user?.Email, user?.UserName, roles, premiumActive));
         }
 

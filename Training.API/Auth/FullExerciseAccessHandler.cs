@@ -1,6 +1,6 @@
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.EntityFrameworkCore;
-using Training.Application.Interfaces;
+using Training.Application.Features.Subscription.Queries.HasActiveSubscription;
 using Training.Domain;
 
 namespace Training.API.Auth
@@ -11,11 +11,11 @@ namespace Training.API.Auth
 
     public class FullExerciseAccessHandler : AuthorizationHandler<FullExerciseAccessRequirement>
     {
-        private readonly ITrainingDbContext _db;
+        private readonly IMediator _mediator;
 
-        public FullExerciseAccessHandler(ITrainingDbContext db)
+        public FullExerciseAccessHandler(IMediator mediator)
         {
-            _db = db;
+            _mediator = mediator;
         }
 
         protected override async Task HandleRequirementAsync(
@@ -39,9 +39,7 @@ namespace Training.API.Auth
                 return;
             }
 
-            var now = DateTimeOffset.UtcNow;
-            var active = await _db.Subscriptions.AsNoTracking()
-                .AnyAsync(subscription => subscription.UserId == userId && subscription.ExpiresAt > now);
+            var active = await _mediator.Send(new HasActiveSubscriptionQuery(userId), CancellationToken.None);
             if (active)
             {
                 context.Succeed(requirement);

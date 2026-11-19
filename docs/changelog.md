@@ -1,5 +1,14 @@
 # Журнал змін
 
+## [2026-11-19] - Перевірка підписки через MediatR
+
+### Добавлено
+- Query `HasActiveSubscription` у `Features/Subscription/Queries`
+
+### Змінено
+- `AuthController` і `FullExerciseAccessHandler` викликають цей Query через `IMediator`
+- API більше не читає `ITrainingDbContext`
+
 ## [2026-11-18] - Ролі та підписка Premium
 
 ### Добавлено
