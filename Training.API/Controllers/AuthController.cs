@@ -2,11 +2,13 @@ using System.Net;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using MediatR;
 using Microsoft.Extensions.Options;
 using Training.API.Auth;
+using Training.Application.Features.Account.Commands.ErasePersonalData;
 using Training.Application.Features.Subscription.Queries.HasActiveSubscription;
 using Training.Domain;
 using Training.Domain.Models;
@@ -105,45 +107,78 @@ namespace Training.API.Controllers
             }
 
             var user = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
-            if (user is null)
+            if (user?.AcceptedTermsAt is null)
             {
-                var email = info.Principal.FindFirstValue(ClaimTypes.Email);
-                if (string.IsNullOrWhiteSpace(email))
-                {
-                    return BadRequest();
-                }
-
-                user = await _userManager.FindByEmailAsync(email);
-                if (user is null)
-                {
-                    user = new TrainingUser
-                    {
-                        UserName = email,
-                        Email = email,
-                        EmailConfirmed = true
-                    };
-                    var created = await _userManager.CreateAsync(user);
-                    if (!created.Succeeded)
-                    {
-                        return BadRequest();
-                    }
-                }
-
-                var login = await _userManager.AddLoginAsync(user, info);
-                if (!login.Succeeded)
-                {
-                    return BadRequest();
-                }
+                return Redirect(ConsentUrl());
             }
 
-            if ((await _userManager.GetRolesAsync(user)).Count == 0)
-            {
-                await _userManager.AddToRoleAsync(user, TrainingRoles.Standard);
-            }
-
+            await EnsureStandardRoleAsync(user);
             await _signInManager.SignInAsync(user, isPersistent: true);
             await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
             return Redirect(SafeReturnUrl(returnUrl));
+        }
+
+        [HttpPost("consent")]
+        public async Task<IActionResult> Consent()
+        {
+            if (!await IsRequestValidAsync())
+            {
+                return BadRequest();
+            }
+
+            var info = await _signInManager.GetExternalLoginInfoAsync();
+            if (info is null)
+            {
+                return BadRequest();
+            }
+
+            var user = await FindOrLinkUserAsync(info);
+            if (user is null)
+            {
+                return BadRequest();
+            }
+
+            user.AcceptedTermsAt = DateTimeOffset.UtcNow;
+            var updated = await _userManager.UpdateAsync(user);
+            if (!updated.Succeeded)
+            {
+                return BadRequest();
+            }
+
+            await EnsureStandardRoleAsync(user);
+            await _signInManager.SignInAsync(user, isPersistent: true);
+            await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
+            return NoContent();
+        }
+
+        [Authorize]
+        [HttpDelete("/api/v1/me")]
+        public async Task<IActionResult> Erase()
+        {
+            if (!await IsRequestValidAsync())
+            {
+                return BadRequest();
+            }
+
+            var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized();
+            }
+
+            var status = await _mediator.Send(new ErasePersonalDataCommand(userId), HttpContext.RequestAborted);
+            if (status == ErasePersonalDataStatus.LastAdmin)
+            {
+                return Conflict(new { code = "lastAdmin" });
+            }
+
+            if (status != ErasePersonalDataStatus.Erased)
+            {
+                return NotFound();
+            }
+
+            await _signInManager.SignOutAsync();
+            return NoContent();
         }
 
         [HttpGet("me")]
@@ -205,6 +240,53 @@ namespace Training.API.Controllers
         private bool IsGoogleStub(string provider)
         {
             return IsGoogle(provider) && _auth.Google.IsStub;
+        }
+
+        private async Task<TrainingUser?> FindOrLinkUserAsync(ExternalLoginInfo info)
+        {
+            var user = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
+            if (user is not null)
+            {
+                return user;
+            }
+
+            var email = info.Principal.FindFirstValue(ClaimTypes.Email);
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                return null;
+            }
+
+            user = await _userManager.FindByEmailAsync(email);
+            if (user is null)
+            {
+                user = new TrainingUser
+                {
+                    UserName = email,
+                    Email = email,
+                    EmailConfirmed = true
+                };
+                var created = await _userManager.CreateAsync(user);
+                if (!created.Succeeded)
+                {
+                    return null;
+                }
+            }
+
+            var login = await _userManager.AddLoginAsync(user, info);
+            return login.Succeeded ? user : null;
+        }
+
+        private async Task EnsureStandardRoleAsync(TrainingUser user)
+        {
+            if ((await _userManager.GetRolesAsync(user)).Count == 0)
+            {
+                await _userManager.AddToRoleAsync(user, TrainingRoles.Standard);
+            }
+        }
+
+        private string ConsentUrl()
+        {
+            return $"{_auth.UiOrigin.TrimEnd('/')}/consent";
         }
 
         private string SafeReturnUrl(string? returnUrl)

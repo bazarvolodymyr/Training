@@ -47,6 +47,11 @@ services.AddAuthorization(options =>
         TrainingRoles.Admin));
 });
 
+services.Configure<SecurityStampValidatorOptions>(options =>
+{
+    options.ValidationInterval = TimeSpan.Zero;
+});
+
 services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.Name = "Training.Session";

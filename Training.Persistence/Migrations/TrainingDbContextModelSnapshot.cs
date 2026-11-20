@@ -419,6 +419,9 @@ namespace Training.Persistence.Migrations
                     b.Property<string>("Id")
                         .HasColumnType("text");
 
+                    b.Property<DateTimeOffset?>("AcceptedTermsAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("integer");
 

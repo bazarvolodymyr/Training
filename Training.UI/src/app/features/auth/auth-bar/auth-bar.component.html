@@ -2,6 +2,16 @@
   @if (user()?.isAuthenticated) {
     <span>{{ user()?.email }}</span>
     <button type="button" (click)="logout()">Вийти</button>
+    @if (confirming()) {
+      <span>Видалити акаунт, сесії і підписки? Уроки залишаться.</span>
+      <button type="button" (click)="deleteAccount()">Підтвердити видалення</button>
+      <button type="button" (click)="cancelDelete()">Скасувати</button>
+    } @else {
+      <button type="button" (click)="askDelete()">Видалити мої дані</button>
+    }
+    @if (error()) {
+      <span>{{ error() }}</span>
+    }
   } @else {
     <a [href]="loginUrl()">Увійти через Google</a>
   }

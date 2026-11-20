@@ -36,7 +36,7 @@ SaaS для тренування іноземної мови (MVP-контент
 
 **Борг відносно узгодженої цілі**
 
-- Немає віддачі статті й банку токенів, медіа, прогресу, адмінки, видачі Premium і GDPR-видалення. Google OAuth — заглушка. Демо-вікторина без авторизації. Перевірка відповіді ще trim + lowercase.
+- Немає віддачі статті й банку токенів, медіа, прогресу, адмінки і видачі Premium. Google OAuth — заглушка. Демо-вікторина без авторизації. Перевірка відповіді ще trim + lowercase. GDPR: згода на першому вході і `DELETE /api/v1/me` (спроб і прогресу в базі ще немає — їх стиратиме той самий Command, коли таблиці з’являться).
 - Прототип UA→EN можна зберегти за змістом; контракт і `question-card` **дозволено ламати** на етапі 4.
 
 Локальні адреси: API `http://localhost:5166`, HTTPS `https://localhost:7014`. Базовий URL UI захардкоджений у `QuestionsService`.
@@ -203,7 +203,7 @@ Manager бачить **усі** уроки. Ліміт Standard — кількі
 
 | Група | Приклади | Доступ |
 |---|---|---|
-| Auth | `GET /api/v1/auth/oauth/google`, callback, `POST /api/v1/auth/logout`, `GET /api/v1/auth/me` | анонім / власник сесії |
+| Auth | `GET /api/v1/auth/oauth/google`, callback, `POST /api/v1/auth/consent`, `POST /api/v1/auth/logout`, `GET /api/v1/auth/me` | анонім / власник сесії |
 | Lessons | `GET /api/v1/lessons`, `GET /api/v1/lessons/{id}` | публічно (опубліковані) |
 | Exercises | `GET /api/v1/lessons/{id}/questions/next?difficulty=`, `POST /api/v1/exercises/{id}/attempts` | демо / Standard / Premium за правилами |
 | Progress | `GET /api/v1/me/progress` | власник |
@@ -341,3 +341,4 @@ dotnet ef database update --project Training.Persistence --startup-project Train
 | 2026-11-08 | `Lesson`/`Exercise` збережені в PostgreSQL; хендлери читають контекст; in-memory репозиторій прибрано |
 | 2026-11-11 | B1: провайдер MVP — Google. У коді заглушка OAuth і BFF-cookie на 30 днів |
 | 2026-11-18 | Ролі Identity, `Subscription.ExpiresAt`, політики матеріалів; сид одного Admin |
+| 2026-11-19 | GDPR: `AcceptedTermsAt` до сесії, `DELETE /api/v1/me`, відкликання cookie-сесій; останнього Admin не видаляти |
