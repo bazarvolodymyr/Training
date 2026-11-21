@@ -1,0 +1,9 @@
+<section class="lesson">
+  <a routerLink="/">До уроків</a>
+  @if (article(); as item) {
+    <h1>{{ item.name }}</h1>
+    <app-article [html]="item.articleHtml"></app-article>
+  } @else if (missing()) {
+    <p>Урок не знайдено.</p>
+  }
+</section>

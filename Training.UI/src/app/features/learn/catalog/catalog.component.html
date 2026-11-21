@@ -1,0 +1,16 @@
+<section class="catalog">
+  <h1>Уроки</h1>
+  @if (lessons().length === 0) {
+    <p>Опублікованих уроків ще немає.</p>
+  } @else {
+    <ul>
+      @for (lesson of lessons(); track lesson.id) {
+        <li>
+          <a [routerLink]="['/lessons', lesson.id]">{{ lesson.name }}</a>
+          <span>{{ lesson.sourceLang }} → {{ lesson.targetLang }}</span>
+        </li>
+      }
+    </ul>
+  }
+</section>
+<app-question-card></app-question-card>
