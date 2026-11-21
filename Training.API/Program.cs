@@ -1,5 +1,7 @@
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using Training.API.Auth;
 using Training.Domain;
 using Training.Application;
@@ -10,7 +12,11 @@ var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
 
 services.Configure<AuthOptions>(builder.Configuration.GetSection(AuthOptions.SectionName));
-var uiOrigin = builder.Configuration["Auth:UiOrigin"] ?? "http://localhost:4200";
+var uiOrigin = builder.Configuration["Auth:UiOrigin"];
+if (string.IsNullOrWhiteSpace(uiOrigin) || uiOrigin == "*")
+{
+    throw new InvalidOperationException("Auth:UiOrigin must be an explicit origin.");
+}
 var cookieSecure = builder.Environment.IsDevelopment()
     ? CookieSecurePolicy.SameAsRequest
     : CookieSecurePolicy.Always;
@@ -92,6 +98,35 @@ services.AddCors(options =>
     });
 });
 
+var rateLimit = new RateLimitOptions();
+builder.Configuration.GetSection(RateLimitOptions.SectionName).Bind(rateLimit);
+if (rateLimit.AuthPermitLimit < 1 || rateLimit.SubmitPermitLimit < 1
+    || rateLimit.AuthWindowSeconds < 1 || rateLimit.SubmitWindowSeconds < 1)
+{
+    throw new InvalidOperationException("RateLimit permit and window must be positive.");
+}
+
+services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy(TrainingRateLimits.Auth, httpContext => RateLimitPartition.GetFixedWindowLimiter(
+        ClientAddress(httpContext),
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = rateLimit.AuthPermitLimit,
+            Window = TimeSpan.FromSeconds(rateLimit.AuthWindowSeconds),
+            QueueLimit = 0
+        }));
+    options.AddPolicy(TrainingRateLimits.Submit, httpContext => RateLimitPartition.GetFixedWindowLimiter(
+        ClientAddress(httpContext),
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = rateLimit.SubmitPermitLimit,
+            Window = TimeSpan.FromSeconds(rateLimit.SubmitWindowSeconds),
+            QueueLimit = 0
+        }));
+});
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -108,7 +143,13 @@ await using (var scope = app.Services.CreateAsyncScope())
 }
 
 app.UseCors("Ui");
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();
+
+static string ClientAddress(HttpContext httpContext)
+{
+    return httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+}

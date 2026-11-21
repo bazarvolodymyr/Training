@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Mvc;
 using MediatR;
 using Microsoft.Extensions.Options;
@@ -67,6 +68,7 @@ namespace Training.API.Controllers
             return Content(html, "text/html; charset=utf-8");
         }
 
+        [EnableRateLimiting(TrainingRateLimits.Auth)]
         [HttpPost("oauth/{provider}/stub")]
         public async Task<IActionResult> StubSignIn(string provider, string? returnUrl)
         {
@@ -97,6 +99,7 @@ namespace Training.API.Controllers
             return Redirect(callback);
         }
 
+        [EnableRateLimiting(TrainingRateLimits.Auth)]
         [HttpGet("callback")]
         public async Task<IActionResult> Callback(string? returnUrl)
         {
@@ -118,6 +121,7 @@ namespace Training.API.Controllers
             return Redirect(SafeReturnUrl(returnUrl));
         }
 
+        [EnableRateLimiting(TrainingRateLimits.Auth)]
         [HttpPost("consent")]
         public async Task<IActionResult> Consent()
         {
@@ -207,6 +211,7 @@ namespace Training.API.Controllers
             return Ok(new AuthMeResponse(true, user?.Email, user?.UserName, roles, premiumActive));
         }
 
+        [EnableRateLimiting(TrainingRateLimits.Auth)]
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {

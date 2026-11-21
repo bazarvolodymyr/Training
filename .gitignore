@@ -361,3 +361,9 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Local secrets. Connection strings stay in user secrets or the environment.
+.env
+.env.*
+appsettings.*.local.json
+**/secrets.json

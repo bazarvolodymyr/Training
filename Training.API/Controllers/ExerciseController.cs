@@ -1,5 +1,7 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using Training.API.Auth;
 using Training.Application.Features.Quiz.Commands.CheckAnswer;
 using Training.Application.Features.Quiz.Queries.GetQuestion;
 
@@ -23,6 +25,7 @@ namespace Training.API.Controllers
             return question is null ? NotFound() : Ok(question);
         }
 
+        [EnableRateLimiting(TrainingRateLimits.Submit)]
         [HttpPost]
         public async Task<IActionResult> QuestionResponse(AnswerResponse answer, CancellationToken cancellationToken)
         {

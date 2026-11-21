@@ -147,13 +147,13 @@
 - **Залежності**: Реєстрація та автентифікація (OAuth + BFF)
 
 ## Задача: Закрити діри прототипу (CORS, secrets, rate limit)
-- **Статус**: Не почата
+- **Статус**: Завершена
 - **Пріоритет**: Високий
 - **Опис**: Прибрати `AllowAll` поза Development, secrets у env, rate limit на auth і submit.
 - **Кроки виконання**:
-  - [ ] Явний CORS origin + credentials
-  - [ ] Rate limiting
-  - [ ] Секрети поза репозиторієм
+  - [x] Явний CORS origin + credentials
+  - [x] Rate limiting
+  - [x] Секрети поза репозиторієм
 - **Залежності**: Реєстрація та автентифікація (OAuth + BFF)
 
 ---

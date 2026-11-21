@@ -22,7 +22,7 @@ SaaS для тренування іноземної мови (MVP-контент
 
 | Шар | Проєкт | Зараз |
 |---|---|---|
-| API | `Training.API` | ASP.NET Core 9, Swagger, CORS `AllowAll`, `ExerciseController`, маршрути `[controller]/[action]` |
+| API | `Training.API` | ASP.NET Core, Swagger лише в Development, CORS лише на `Auth:UiOrigin` з credentials, rate limit на auth і submit, `ExerciseController` |
 | Application | `Training.Application` | MediatR, `Features/Quiz` (`GetQuestionQuery`, `CheckAnswerCommand`), DTO поруч із хендлером |
 | Domain | `Training.Domain` | `Lesson`, `Exercise`, `Subscription`, ролі Standard/Premium/Manager/Admin |
 | Persistence | `Training.Persistence` | EF Core + PostgreSQL; сид уроку; хендлери вікторини через `ITrainingDbContext` |
@@ -256,13 +256,13 @@ Manager бачить **усі** уроки. Ліміт Standard — кількі
 | Час | UTC у БД | |
 | JSON | camelCase, enum рядком | |
 
-Планові пакети (не ставити до підтвердження задачі): rate limiting. Справжній Google client id — коли заглушку замінимо.
+Rate limit — вбудований middleware ASP.NET Core (окрема IP, фіксоване вікно). Auth: 20 запитів / 60 с. Submit вікторини: 30 / 60 с. Справжній Google client id — коли заглушку замінимо, і лише в user secrets або env.
 
 Хостинг і blob — після C2/C4.
 
 ### 6.1 Локальний PostgreSQL
 
-Контейнер описаний у `docker-compose.yml` (користувач `training`, база `training`, порт `5432`). Пароль лишається в Compose для dev і в user secrets API, не в `appsettings`.
+Контейнер описаний у `docker-compose.yml` (користувач `training`, база `training`, порт `5432`). Пароль у Compose — лише локальний dev. API читає `ConnectionStrings:Training` з user secrets або зі змінної середовища `ConnectionStrings__Training`. У `appsettings` рядка підключення немає.
 
 ```bash
 docker compose up -d
@@ -342,3 +342,4 @@ dotnet ef database update --project Training.Persistence --startup-project Train
 | 2026-11-11 | B1: провайдер MVP — Google. У коді заглушка OAuth і BFF-cookie на 30 днів |
 | 2026-11-18 | Ролі Identity, `Subscription.ExpiresAt`, політики матеріалів; сид одного Admin |
 | 2026-11-19 | GDPR: `AcceptedTermsAt` до сесії, `DELETE /api/v1/me`, відкликання cookie-сесій; останнього Admin не видаляти |
+| 2026-11-20 | CORS лише на origin UI з credentials. Rate limit auth і submit. Секрет БД поза репозиторієм |
