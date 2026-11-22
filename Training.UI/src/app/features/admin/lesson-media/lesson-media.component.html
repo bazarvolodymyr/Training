@@ -1,0 +1,28 @@
+<section class="lesson-media">
+  <a routerLink="/admin">До списку</a>
+  <h1>Файл для статті</h1>
+  @if (!allowed()) {
+    <p>Потрібна роль Manager або Admin.</p>
+  } @else {
+    <input type="file" (change)="choose($event)" accept="image/jpeg,image/png,image/webp,audio/mpeg,audio/mp4,.jpg,.jpeg,.png,.webp,.mp3,.m4a">
+    <button type="button" (click)="upload()">Завантажити</button>
+    @if (uploaded(); as file) {
+      @if (file.kind === 'Image') {
+        <label>
+          Підпис
+          <input [ngModel]="alt()" (ngModelChange)="alt.set($event)">
+        </label>
+        <img [src]="file.url" alt="">
+      } @else {
+        <audio [src]="file.url" controls></audio>
+      }
+      <button type="button" (click)="insert()">Вставити в статтю</button>
+    }
+    @if (inserted()) {
+      <p>Файл вставлено. <a [routerLink]="['/lessons', lessonId()]">Відкрити статтю</a></p>
+    }
+    @if (error()) {
+      <p>{{ error() }}</p>
+    }
+  }
+</section>

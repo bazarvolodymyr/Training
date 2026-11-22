@@ -1,6 +1,9 @@
 <div class="auth-bar">
   @if (user()?.isAuthenticated) {
     <span>{{ user()?.email }}</span>
+    @if (canEdit()) {
+      <a routerLink="/admin">Медіа</a>
+    }
     <button type="button" (click)="logout()">Вийти</button>
     @if (confirming()) {
       <span>Видалити акаунт, сесії і підписки? Уроки залишаться.</span>

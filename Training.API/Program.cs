@@ -7,11 +7,15 @@ using Training.Domain;
 using Training.Application;
 using Training.Domain.Models;
 using Training.Persistence;
+using Training.API.Media;
+using Training.Application.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
 
 services.Configure<AuthOptions>(builder.Configuration.GetSection(AuthOptions.SectionName));
+services.Configure<MediaOptions>(builder.Configuration.GetSection(MediaOptions.SectionName));
+services.AddSingleton<IMediaFileStore, LocalMediaFileStore>();
 var uiOrigin = builder.Configuration["Auth:UiOrigin"];
 if (string.IsNullOrWhiteSpace(uiOrigin) || uiOrigin == "*")
 {

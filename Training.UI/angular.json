@@ -67,7 +67,8 @@
               "buildTarget": "Training.UI:build:production"
             },
             "development": {
-              "buildTarget": "Training.UI:build:development"
+              "buildTarget": "Training.UI:build:development",
+              "proxyConfig": "proxy.conf.json"
             }
           },
           "defaultConfiguration": "development"

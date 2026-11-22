@@ -19,6 +19,8 @@ namespace Training.Persistence
 
         public DbSet<Subscription> Subscriptions => Set<Subscription>();
 
+        public DbSet<MediaAsset> MediaAssets => Set<MediaAsset>();
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

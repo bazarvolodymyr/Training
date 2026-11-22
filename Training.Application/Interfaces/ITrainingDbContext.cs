@@ -11,6 +11,8 @@ namespace Training.Application.Interfaces
 
         DbSet<Subscription> Subscriptions { get; }
 
+        DbSet<MediaAsset> MediaAssets { get; }
+
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
 }

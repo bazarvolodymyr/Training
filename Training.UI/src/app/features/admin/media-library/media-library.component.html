@@ -1,0 +1,14 @@
+<section class="media-library">
+  <h1>Медіа уроків</h1>
+  @if (!allowed()) {
+    <p>Потрібна роль Manager або Admin.</p>
+  } @else if (lessons().length === 0) {
+    <p>Опублікованих уроків ще немає.</p>
+  } @else {
+    <ul>
+      @for (lesson of lessons(); track lesson.id) {
+        <li><a [routerLink]="['/admin/lessons', lesson.id]">{{ lesson.name }}</a></li>
+      }
+    </ul>
+  }
+</section>

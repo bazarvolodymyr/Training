@@ -1,0 +1,13 @@
+.lesson-media {
+  max-width: 40rem;
+  margin: 24px auto;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+img, audio {
+  max-width: 100%;
+}

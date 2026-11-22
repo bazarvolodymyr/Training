@@ -52,7 +52,7 @@ namespace Training.Application.Features.Lessons
                 }
 
                 var url = args.SanitizedUrl;
-                if (string.IsNullOrEmpty(url) || IsRemote(url))
+                if (string.IsNullOrEmpty(url) || !IsStoredMedia(url))
                 {
                     args.SanitizedUrl = null;
                 }
@@ -73,15 +73,16 @@ namespace Training.Application.Features.Lessons
             return sanitizer.Sanitize(html);
         }
 
-        private static bool IsRemote(string url)
+        private static bool IsStoredMedia(string url)
         {
-            if (url.StartsWith("//", StringComparison.Ordinal))
+            const string prefix = "/api/v1/media/";
+            if (!url.StartsWith(prefix, StringComparison.Ordinal))
             {
-                return true;
+                return false;
             }
 
-            var colon = url.IndexOf(':');
-            return colon > 0;
+            var id = url[prefix.Length..];
+            return int.TryParse(id, out var parsed) && parsed > 0 && id == parsed.ToString();
         }
     }
 }

@@ -1,10 +1,11 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, OnInit, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../data/services/auth.service';
 
 @Component({
   selector: 'app-auth-bar',
-  imports: [],
+  imports: [RouterLink],
   templateUrl: './auth-bar.component.html',
   styleUrl: './auth-bar.component.scss'
 })
@@ -16,6 +17,11 @@ export class AuthBarComponent implements OnInit {
 
   ngOnInit() {
     this.auth.me().subscribe()
+  }
+
+  canEdit() {
+    const roles = this.user()?.roles ?? []
+    return roles.includes('Manager') || roles.includes('Admin')
   }
 
   loginUrl() {
