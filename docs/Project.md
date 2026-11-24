@@ -347,3 +347,4 @@ dotnet ef database update --project Training.Persistence --startup-project Train
 | 2026-11-21 | Публічні `GET /api/v1/lessons`. HTML статті санітизується на API; UI не обходить свій sanitizer |
 | 2026-11-21 | C4: медіа MVP на локальному диску. JPEG/PNG/WebP до 2 МБ, MP3/M4A до 5 МБ |
 | 2026-11-21 | `MediaAsset` на локальному диску. Віддача `/api/v1/media/{id}`. Вставка тега в HTML статті |
+| 2026-11-22 | REST-вікторина: три рівні, банк токенів, нормалізація і diff. Вибір питання ще не випадковий |

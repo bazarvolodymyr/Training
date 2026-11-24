@@ -29,13 +29,24 @@
 .failure-answer {
     color: red;
 }
-.angram-card {
-    padding: 20px 12px;
-    display: grid;
-    grid-template-columns: repeat(3, 200px);
-    gap: 16px;
-    justify-content: center;
-    
+.levels, .tokens {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.levels button.active {
+    font-weight: bold;
+}
+
+.diff-delete {
+    color: red;
+    text-decoration: line-through;
+}
+
+.diff-insert {
+    color: green;
+    text-decoration: underline;
 }
 .answer-input {
 width: 1fr;

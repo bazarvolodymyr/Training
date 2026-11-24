@@ -1,86 +1,74 @@
-import { Component, ElementRef, inject, ViewChild, viewChild } from '@angular/core';
-import { Question } from '../../data/interfaces/question.interface';
-import { Answer } from '../../data/interfaces/answer.interface';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Component, inject, input, OnInit, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { AttemptResult } from '../../data/interfaces/attempt-result.interface';
+import { NextQuestion } from '../../data/interfaces/next-question.interface';
+import { AuthService } from '../../data/services/auth.service';
 import { QuestionsService } from '../../data/services/questions.service';
-import { FormArray, FormBuilder, FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { AnswerResult } from '../../data/interfaces/answer-result.interface';
 
 @Component({
   selector: 'app-question-card',
-  imports: [FormsModule, ReactiveFormsModule],
+  imports: [FormsModule],
   templateUrl: './question-card.component.html',
   styleUrl: './question-card.component.scss'
 })
-export class QuestionCardComponent {
-  questionService = inject(QuestionsService)
-  fb = inject(FormBuilder)
-  question!: Question
-  answer: string = ""
-  result: string = ""
-  answerResult: AnswerResult | null = null
-  anagrams:string[] = ["new", "know", "now", "knowledge"]
-  fbAnagrams:string[] = this.anagrams
-  questionForm = this.fb.group({
-    //answer: [''],
-    anagrams: this.fb.array(this.fbAnagrams.map(anagram => this.fb.control(anagram)))
-  })
+export class QuestionCardComponent implements OnInit {
+  private questions = inject(QuestionsService)
+  private auth = inject(AuthService)
+  lessonId = input.required<number>()
+  difficulty = signal('Easy')
+  question = signal<NextQuestion | null>(null)
+  answer = signal('')
+  result = signal<AttemptResult | null>(null)
+  missing = signal(false)
+  levels = [
+    { id: 'Easy', label: 'Легкий' },
+    { id: 'Medium', label: 'Середній' },
+    { id: 'Hard', label: 'Складний' }
+  ]
 
-  @ViewChild('answerInput') answerInput!: ElementRef
-  setFocus(){
-    this.answerInput.nativeElement.focus()
-  }
-  constructor() {
-      this.questionService.getQuestion()
-        .subscribe(val => {
-          this.question = val
-        })
-  }
-  get anagramsControl(){
-    return this.questionForm.get('anagrams') as FormArray
+  ngOnInit() {
+    this.auth.me().subscribe(() => this.load())
   }
 
-  anagramClick(val: string){
-     let anserArray = this.answer.split(' ')
-    if(val.startsWith(anserArray.at(-1)!)){
-      anserArray.pop()
-      anserArray.push(val)
-      this.answer = anserArray.join(" ") + ' '
-    }else{
-      this.answer += val + ' '
+  chooseLevel(level: string) {
+    this.difficulty.set(level)
+    this.load()
+  }
+
+  addToken(token: string) {
+    const current = this.answer().trim()
+    this.answer.set(current.length === 0 ? `${token} ` : `${current} ${token} `)
+  }
+
+  submit() {
+    const question = this.question()
+    if (!question) {
+      return
     }
-    this.onAnswerChange()
-  }
 
-  onAnswerChange(){
-    let anserArray = this.answer.split(' ')
-    this.fbAnagrams = []
-    this.anagrams.forEach(element => {
-      if(!anserArray.includes(element)){
-        this.fbAnagrams.push(element)
-      }
-    });
-    this.questionForm.setControl("anagrams", this.fb.array(this.fbAnagrams.map(anagram => this.fb.control(anagram))))
-  
-  }
-  
-  splitName(name: string):{start:string, end:string}{
-    let anserArray = this.answer.split(' ')
-    let lastItem = anserArray.at(-1)
-    if(lastItem && name.startsWith(lastItem)){
-      return {start: lastItem, end:name.substring(lastItem.length)}
-    }
-    return {start: "", end:name}
-  }
-  
-  sendAnswer(){
-    //@ts-ignore
-    this.questionService.sendAnswer({id: this.question.id, answer: this.answer})
-      .subscribe(val => {
-        this.answerResult = val
-        if(this.answerResult){
-          this.result = this.answerResult.exerciseStatus
+    this.questions.submit(question.exerciseId, this.difficulty(), this.answer()).subscribe({
+      next: result => this.result.set(result),
+      error: (error: HttpErrorResponse) => {
+        if (error.status === 404) {
+          this.missing.set(true)
         }
-      })
+      }
+    })
   }
-  
+
+  nextQuestion() {
+    this.load()
+  }
+
+  private load() {
+    this.answer.set('')
+    this.result.set(null)
+    this.missing.set(false)
+    this.question.set(null)
+    this.questions.next(this.lessonId(), this.difficulty()).subscribe({
+      next: question => this.question.set(question),
+      error: () => this.missing.set(true)
+    })
+  }
 }

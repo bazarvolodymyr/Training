@@ -3,6 +3,7 @@
   @if (article(); as item) {
     <h1>{{ item.name }}</h1>
     <app-article [html]="item.articleHtml"></app-article>
+    <app-question-card [lessonId]="item.id"></app-question-card>
   } @else if (missing()) {
     <p>Урок не знайдено.</p>
   }

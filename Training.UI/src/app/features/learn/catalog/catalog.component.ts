@@ -1,12 +1,11 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { QuestionCardComponent } from '../../../common-ui/question-card/question-card.component';
 import { LessonSummary } from '../../../data/interfaces/lesson-summary.interface';
 import { LessonsService } from '../../../data/services/lessons.service';
 
 @Component({
   selector: 'app-catalog',
-  imports: [RouterLink, QuestionCardComponent],
+  imports: [RouterLink],
   templateUrl: './catalog.component.html',
   styleUrl: './catalog.component.scss'
 })
